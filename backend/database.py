@@ -8,10 +8,10 @@ load_dotenv(find_dotenv()) #<-- Carga de variables de entorno
 def db_conexion():
     try:
         conexion = mysql.connector.connect(
-            host = ('DB_HOST', '127.0.0.1'),
-            user = ('DB_USER'),
-            password = 'DB_PASSWORD',
-            database = 'DB_NAME'
+            host = os.getenv('DB_HOST', '127.0.0.1'),
+            user = os.getenv('DB_USER'),
+            password = os.getenv('DB_PASSWORD'),
+            database = os.getenv('DB_NAME')
         )
         if conexion.is_connected():
             return conexion
