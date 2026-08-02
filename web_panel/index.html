@@ -60,55 +60,87 @@
 
     <!-- Contenido principal -->
     <main class = "container-fluid p-4">
-        <!-- El Resumen -->
-        <section class = "row mb - 4">
-            <article class = "col-md-6 mb-3">
-                <div class = "card shadow-sm h-100 border-0 border-start border-primary border-4">
-                    <h5 class = "text-muted">Precio base Actual</h5>
-                    <h2 class = "display-6 fw-bold text-dark">$26.00 MXN</h2>
+        <!--Resumen-->
+        <section class="row mb-4">
+            <article class ="col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 border-start border-primary border-4 rounded-3">
+                    <div class="card-body text-center py-4">
+                        <h5 class="text-dark fw-bold mb-3">Precio Base a Domicilio</h5>
+                        <h2 class="display-6 fw-bold text-dark mb-0">$26.00 MXN</h2>
+                    </div>
                 </div>
             </article>
-
-            <article class = "col-md-6 mb-3">
-                <div class = "card shadow-sm h-100 border-0 border-start border-success border-4">
-                    <div class = "card-body text-center">
-                    <h5 class = "text-muted">Estado Actual del Servidor</h5>
-                    <h2 class = "display-6 fw-bold text-success">Conectando...</h2>
+            <!-- Estado del servidor -->
+            <article class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 border-start border-success border-4 rounded-3">
+                    <div class="card-body text-center py-4">
+                        <h5 class="text-dark fw-bold mb-3">Estado del Servidor</h5>
+                        <h2 class="display-6 fw-bold text-success mb-0" id="estadoServidor">Conectando...</h2>
                     </div>
                 </div>
             </article>
         </section>
 
-        <!-- Tabla de datos (colonias) -->
-        <section class = "row">
-            <div class = "col-12">
-                <div class="card shadow-sm border 0 rounded-3">
+        <!-- Tablas -->
+        <section class="row">
+            <!--Tabla de clientes-->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
                     <div class="card-header bg-white py-3 border-bottom-0">
-                        <h5 class="mb-0 fw-bold text-center">Colonias</h5>
+                        <h5 class="mb-0 fw-bold text-center">Clientes</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped mb-0 text-center align-items-middle">
+                            <table class="table table-hover table-striped mb-0 text-center align-middle">
                                 <thead class="table-light text-muted">
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Colonia</th>
+                                        <th>Cliente</th>
+                                        <th>Categoria</th>
+                                        <th>Tarifa</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="tablaClientes">
                                     <tr>
-                                        <td colspan="2" class="py-4 text-muted">
-                                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                                            Buscando en la base de datos...
-                                        </td>
+                                        <td colspan="4" class="py-4 text-muted">Cargando clientes...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-    </main>
+            </div>
 
+            <!--Tabla de repartidores-->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0 fw-bold text-center">Repartidores Actuales</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0 text-center align-middle">
+                                <thead class="table-light text-muted">
+                                    <tr>
+                                        <th>Repartidor</th>
+                                        <th>Estado</th>
+                                        <th>Ruta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaRepartidores">
+                                    <tr>
+                                        <td colspan="4" class="py-4 text-muted">Cargando repartidores...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    </div>
     <!-- BACKEND -->
     <script src="js/api.js"></script>
 </body>

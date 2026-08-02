@@ -1,29 +1,78 @@
-async function conectarAPI(){
-    try{
-        //Peticion al servidor de FastApi
-        const respuesta = await fetch("http://127.0.0.1:8000/colonias");
-        const datosJson = await respuesta.json();
+// Función 1: Cargar Repartidores
+async function cargarRepartidores() {
+    try {
+        const respuesta = await fetch('http://127.0.0.1:8000/repartidores');
+        const repartidores = await respuesta.json();
 
-        //Buscar el tbody en el html y limpiarlo, osea se le quita el "buscando en la bd..."
-        const tabla = document.querySelector('tbody');
-        tabla.innerHTML = '';
+        //buscar la tabla en el html por su id
+        const tabla = document.getElementById('tablaRepartidores');
+        tabla.innerHTML = ''; //Limpiar el mensaje de cargando repartidores
 
-        //Actualizar el mensaje de "conectando"
-        //Se selecciona el h2 dentro del segundo article
-        const estadoServidor = document.querySelectorAll('article h2')[1];
-        estadoServidor.innerText = `En linea (${datosJson.total_registros} colonias)`;
+        //Contar cuantos repartidores hjay en total para actualizar el estado
+        const total = repartidores.length;
+        document.getElementById('estadoServidor').innerText = "En línea";
+        document.getElementById('estadoServidor').className = "display-6 fw-bold text-success mb-0";
 
-        datosJson.datos.forEach(colonia => {
-            tabla.innerHTML += `
+        //recorrer la lista de repartidores
+        repartidores.forEach(repartidor => {
+            //cambiar el color de etiqueta dependiendo del estado
+            let colorBadge = repartidor.estado === 'Libre' ? 'bg-secondary' : 'bg-success';
+
+            //fila con los datos
+            const fila = `
                 <tr>
-                    <td>#${colonia.id_colonia}</td>
-                    <td>${colonia.nombre_colonia}</td>
+                    <td class="fw-semibold">${repartidor.nombre}</td>
+                    <td><span class="badge ${colorBadge}">${repartidor.estado}</span></td>
+                    <td>${repartidor.ruta}</td>
+                    <td>
+                        <button class="btn btn-sm btn-light border shadow-sm"><i class="bi bi-three-dots"></i></button>
+                    </td>
+                </tr>
             `;
+            tabla.innerHTML += fila; //Se añade la fila a la tabla
         });
     } catch (error) {
-        console.error("Error al conectar con FastAPI:", error);
-        const estadoServidor = document.querySelectorAll('article h2')[1];
-        estadoServidor.innerText = "Desconectado";
+        console.error("Error al cargar los repartidores:", error);
+        document.getElementById('estadoServidor').innerText = "Desconectado";
+        document.getElementById('estadoServidor').className = "display-6 fw-bold text-danger mb-0";
     }
 }
-conectarAPI();
+
+// Función 2: Cargar Clientes
+async function cargarClientes() {
+    try {
+        //Se piden los clientes
+        const respuesta = await fetch('http://127.0.0.1:8000/clientes');
+        const clientes = await respuesta.json();
+
+        const tabla = document.getElementById('tablaClientes');
+        tabla.innerHTML = ''; //Se limpia el texto
+
+        //Se recorre la lista de clientes
+        clientes.forEach(cliente => {
+            //Se quita la palabra Cliente para verse mas limpio
+            let categoriaLimpia = cliente.categoria.replace('Cliente ', '');
+            //La tarifa se muestra en dos decimales
+            let tarifaFormateada = parseFloat(cliente.tarifa).toFixed(2);
+
+            //fila
+            const fila = `
+                <tr>
+                    <td class="fw-semibold">${cliente.cliente}</td>
+                    <td>${categoriaLimpia}</td>
+                    <td>$${tarifaFormateada}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Ver</button>
+                    </td>
+                </tr>
+            `;
+            tabla.innerHTML += fila;
+        });
+    } catch (error) {
+        console.error("Error al cargar los clientes:", error);
+    }
+}
+
+// Ejecutar las funciones al mismo tiempo
+cargarRepartidores();
+cargarClientes();
