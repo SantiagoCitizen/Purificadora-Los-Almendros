@@ -1,4 +1,14 @@
-// Función 1: Cargar Repartidores
+//Evitar que entren al index sin logearse
+const tokenVIP = sessionStorage.getItem('tokenVIP');
+
+if (!tokenVIP) {
+    window.location.replace('login.html');
+}
+
+const usuarioLogueado = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+
+
+// Función: Cargar Repartidores
 async function cargarRepartidores() {
     try {
         const respuesta = await fetch('http://127.0.0.1:8000/repartidores');
@@ -38,7 +48,7 @@ async function cargarRepartidores() {
     }
 }
 
-// Función 2: Cargar Clientes
+// Función: Cargar Clientes
 async function cargarClientes() {
     try {
         //Se piden los clientes
@@ -73,6 +83,22 @@ async function cargarClientes() {
     }
 }
 
+//Funcion: Cerrar sesion
+
+//Boton de salir en el html "btnSalir"
+const botonSalir = document.getElementById('btnSalir');
+
+//Listener para capturar el clic al boton
+botonSalir.addEventListener('click', (evento) => {
+    //Evitar que se recargue la pagina por defecto
+    evento.preventDefault();
+    //Eliminar el token por seguridad
+    sessionStorage.removeItem('tokenVIP');
+    //Borrar los datos del usuario logeado
+    sessionStorage.removeItem('usuarioLogeado');
+    //redirigir al login
+    window.location.replace('login.html');
+})
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();
 cargarClientes();
