@@ -78,3 +78,7 @@ create table if not exists pedidos (
     foreign key (id_direccion) references direcciones_clientes (id_direccion),
     foreign key (id_repartidor_asignado) references usuarios (id_usuario)
 );
+
+#Modificacion: Columna tarifa especial
+ALTER TABLE usuarios 
+ADD COLUMN tarifa_especial float null AFTER rfc;
