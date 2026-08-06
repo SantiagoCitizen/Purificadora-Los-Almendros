@@ -1,9 +1,18 @@
 //Evitar que entren al index sin logearse
-const tokenVIP = sessionStorage.getItem('tokenVIP');
-
-if (!tokenVIP) {
-    window.location.replace('login.html');
+function verificarAcceso() {
+    if (!sessionStorage.getItem('tokenVIP')) {
+        window.location.replace('login.html');
+    }
 }
+//Revision al cargar la pagina
+verificarAcceso();
+//Revision forzada si el usuario usa los botones de "atras o adelante" del navegador
+window.addEventListener('pageshow', function(event) {
+    //event.persisted es true si el navegador saco la pagina de la memoria cache
+    if (event.persisted) {
+        verificarAcceso();
+    }
+});
 
 const usuarioLogueado = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
 
