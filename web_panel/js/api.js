@@ -72,7 +72,7 @@ async function cargarClientes() {
                     <td>${categoriaLimpia}</td>
                     <td>$${tarifaFormateada}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Ver</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="abrirBtnVerCliente(${cliente.id_usuario})"><i class="bi bi-eye"></i> Ver</button>
                     </td>
                 </tr>
             `;
@@ -99,6 +99,47 @@ botonSalir.addEventListener('click', (evento) => {
     //redirigir al login
     window.location.replace('login.html');
 })
+
+//Funcion para abrir el boton "Ver" en dashboard principal de cliente
+
+async function abrirBtnVerCliente(idUsuario) {
+    try{
+        //Instanciar el modal de bootstrap para controlarlo
+        const modal = new bootstrap.Modal(document.getElementById('btnVerCliente'));
+        //mostrar en pantalla
+        modal.show();
+        //Texto de "cargando" por si el internet esta lento
+        document.getElementById('nombreCliente').innerText = 'Cargando...';
+        document.getElementById('telefonoCliente').innerText = '...';
+        document.getElementById('direccionCliente').innerText = '...';
+        document.getElementById('inputTarifa').value = "";
+        //Pedir a FastAPI el JSON del cliente
+        const respuesta = await fetch(`http://127.0.0.1:8000/clientes/${idUsuario}`);
+        const datosCliente = await respuesta.json();
+
+        //armar el nombre (si es empresa, se agrega la razon social)
+        let nombreCompleto = `${datosCliente.nombre} ${datosCliente.apellido_paterno}`;
+        if (datosCliente.id_rol === 4){
+            nombreCompleto += ` - ${datosCliente.razon_social}`;
+        }
+        document.getElementById('nombreCliente').innerText = nombreCompleto;
+        //poner telefono
+        document.getElementById('telefonoCliente').innerText = datosCliente.telefono;
+        //armar la direccion
+        let direccionFisica = `${datosCliente.calle} #${datosCliente.numero}, Col. ${datosCliente.nombre_colonia}`;
+        //si el cliente puso referencias, se concatenan
+        if (datosCliente.referencias_domicilio) {
+            direccionFisica += ` (Ref: ${datosCliente.referencias_domicilio})`;
+        }
+        document.getElementById('direccionCliente').innerText = direccionFisica;
+        //poner la tarifa especial en el input
+        document.getElementById('inputTarifa').value = datosCliente.tarifa_especial;
+    } catch (error) {
+        console.error("Error al cargar los detalles del cliente", error);
+        document.getElementById('nombreCliente').innerText = "Error al cargar datos";
+    }
+}
+
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();
 cargarClientes();

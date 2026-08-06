@@ -89,7 +89,8 @@ def get_clientes():
     try:
         cursor = conexion.cursor(dictionary=True)
         sql_query = """
-            SELECT 
+            SELECT
+                id_usuario,
                 CONCAT_WS(' ', nombre, apellido_paterno) AS cliente,
                 CASE id_rol
                     WHEN 3 THEN 'Residencial'
@@ -158,6 +159,51 @@ def login(datos: DatosLogin):
         del usuario['password_hash']
         #Enviar los datos del usuario al frontend
         return {"Mensaje": "Login exitoso", "token": token, "usuario": usuario}
+    except Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Boton "Ver" en dashboard principal de cliente
+@app.get("/clientes/{id_usuario}")
+def get_detalle_clientes(id_usuario: int):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        #Consulta sql con joins
+        sql_query = """
+            SELECT
+                u.id_usuario,
+                u.nombre,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.telefono,
+                u.id_rol,
+                u.razon_social,
+                u.rfc,
+                IFNULL(u.tarifa_especial, 26.00) AS tarifa_especial,
+                dc.calle,
+                dc.numero,
+                dc.referencias_domicilio,
+                c.nombre_colonia
+            FROM usuarios u
+            LEFT JOIN direcciones_clientes dc ON u.id_usuario = dc.id_usuario
+            LEFT JOIN colonias c ON dc.id_colonia = c.id_colonia
+            WHERE u.id_usuario = %s AND u.id_rol IN (3, 4)
+        """
+        #se pasa el id_usuario que viene en la url
+        cursor.execute(sql_query, (id_usuario,))
+        cliente = cursor.fetchone()
+
+        if not cliente:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        return cliente
     except Error as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
