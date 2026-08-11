@@ -26,6 +26,9 @@ class DatosLogin(BaseModel):
 class ActualizarTarifa(BaseModel):
     tarifa_especial: float
 
+class NuevaColonia(BaseModel):
+    nombre_colonia: str
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -245,5 +248,37 @@ def actualizar_tarifa_cliente(id_usuario: int, datos: ActualizarTarifa):
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()
-            if conexion and conexion.is_connected():
-                conexion.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Apartado de logistica
+#Ver colonias ya registradas
+#---Funcion get 
+
+
+
+#Agregar colonias (por si el negocio se expande y pueden repartir a colonias nuevas)
+@app.post("/colonias")
+def agregar_colonia(datos: NuevaColonia):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+    
+    try:
+        cursor = conexion.cursor()
+        #Agregar nueva colonia
+        sql_query = """
+            INSERT INTO colonias (nombre_colonia)
+            VALUES (%s)
+        """
+        cursor.execute(sql_query, (datos.nombre_colonia,))
+        conexion.commit()
+        return {"mensaje": "Colonia registrada correctamente"}
+    except Error as e:
+        conexion.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
