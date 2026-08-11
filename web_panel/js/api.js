@@ -143,11 +143,52 @@ async function abrirBtnVerCliente(idUsuario) {
         document.getElementById('direccionCliente').innerText = direccionFisica;
         //poner la tarifa especial en el input
         document.getElementById('inputTarifa').value = datosCliente.tarifa_especial;
+        document.getElementById('btnGuardarTarifa').setAttribute(`onclick`, `guardarNuevaTarifa(${idUsuario})`);
     } catch (error) {
         console.error("Error al cargar los detalles del cliente", error);
         document.getElementById('nombreCliente').innerText = "Error al cargar datos";
     }
 }
+//Funcion para guardar la nueva tarifa
+async function guardarNuevaTarifa(idUsuario) {
+    //Obtener el valor de la nueva tarifa
+    const nuevaTarifa = document.getElementById('inputTarifa').value;
+    //Cambiar el texto del boton para que parezca que esta pensando o procesando
+    const btnGuardar = document.getElementById('btnGuardarTarifa');
+    btnGuardar.innerText = 'Guardando...';
+    btnGuardar.disable = true;
+
+    try {
+        //Enviar el valor al backend
+        const respuesta = await fetch(`http://127.0.0.1:8000/clientes/${idUsuario}/tarifa`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tarifa_especial: parseFloat(nuevaTarifa) })
+        });
+
+        if (respuesta.ok){
+            //Si todo sale bien, recarga la tabla principal para mostrar el nuevo precio
+            cargarClientes();
+            //Aviso al usuario y se regresa el boton a la normalidad
+            alert("Tarifa actualizada con éxito.");
+            btnGuardar.innerText = "Guardar";
+            btnGuardar.disabled = false;
+        } else {
+            alert("Error al guardar la tarifa.");
+            btnGuardar.innerText = "Guardar";
+            btnGuardar.disabled = false;
+        }
+    } catch (error) {
+        console.error("Error en la petición PUT:", error);
+        alert("Fallo en la conexion con el servidor");
+        btnGuardar.innerText = "Guardar";
+        btnGuardar.disabled = false;
+    }
+    
+}
+
 
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();

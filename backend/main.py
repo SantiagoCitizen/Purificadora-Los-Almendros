@@ -23,6 +23,9 @@ class DatosLogin(BaseModel):
     telefono: str
     password: str
 
+class ActualizarTarifa(BaseModel):
+    tarifa_especial: float
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -211,3 +214,35 @@ def get_detalle_clientes(id_usuario: int):
             cursor.close()
         if conexion and conexion.is_connected():
             conexion.close()
+
+#Actualizar la tarifa especial de un cliente
+@app.put("/clientes/{id_usuario}/tarifa")
+def actualizar_tarifa_cliente(id_usuario: int, datos: ActualizarTarifa):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor()
+        #Actualizar la tarifa del usuario especifico
+        sql_query = """
+            UPDATE usuarios
+            SET tarifa_especial = %s
+            WHERE id_usuario = %s AND id_rol IN (3, 4);
+        """
+        cursor.execute(sql_query, (datos.tarifa_especial, id_usuario))
+        #Hacer commit para guardar los cambios (pq se hizo un update)
+        conexion.commit()
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado o la tarifa no fue modificada")
+        return {"mensaje": "Tarifa actualizada correctamente"}
+
+    except Error as e:
+        conexion.rollback() #Hacer rollback por si hay un error, por seguridad y no echar a perder nada
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+            if conexion and conexion.is_connected():
+                conexion.close()
