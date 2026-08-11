@@ -43,9 +43,7 @@ async function cargarRepartidores() {
                     <td class="fw-semibold">${repartidor.nombre}</td>
                     <td><span class="badge ${colorBadge}">${repartidor.estado}</span></td>
                     <td>${repartidor.ruta}</td>
-                    <td>
-                        <button class="btn btn-sm btn-light border shadow-sm"><i class="bi bi-three-dots"></i></button>
-                    </td>
+                    <td class="text-muted"><i class="bi bi-telephone"></i> ${repartidor.telefono}</td>
                 </tr>
             `;
             tabla.innerHTML += fila; //Se añade la fila a la tabla

@@ -57,6 +57,7 @@ def get_repartidores():
         sql_query = """
             SELECT
                 CONCAT(u.nombre, ' ', u.apellido_paterno) AS nombre,
+                u.telefono,
                 IF(MAX(rr.estatus_disponibilidad) = 1, 'Libre', 'En Ruta') AS estado,
                 GROUP_CONCAT(c.nombre_colonia SEPARATOR ', ') AS ruta
             FROM usuarios u
