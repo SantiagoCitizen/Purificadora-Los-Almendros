@@ -1,3 +1,4 @@
+
 //Evitar que entren al index sin logearse
 function verificarAcceso() {
     if (!sessionStorage.getItem('tokenVIP')) {
@@ -16,9 +17,12 @@ window.addEventListener('pageshow', function(event) {
 
 const usuarioLogueado = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
 
+//MODULO PRINCIPAL (VENTANA PRINCIPAL)
 
 // Función: Cargar Repartidores
 async function cargarRepartidores() {
+    const select = document.getElementById('tablaRepartidores');
+    if (!select) return;
     try {
         const respuesta = await fetch('http://127.0.0.1:8000/repartidores');
         const repartidores = await respuesta.json();
@@ -57,6 +61,9 @@ async function cargarRepartidores() {
 
 // Función: Cargar Clientes
 async function cargarClientes() {
+    const tablita = document.getElementById('tablaClientes');
+    if (!tablita) return;
+
     try {
         //Se piden los clientes
         const respuesta = await fetch('http://127.0.0.1:8000/clientes');
@@ -186,7 +193,181 @@ async function guardarNuevaTarifa(idUsuario) {
     }
     
 }
+//FIN MODULO PRINCIPAL: (VISTA PRINCIPAL)
 
+//MODULO LOGISTICA 
+
+// VER COLONIAS REGISTRADAS
+
+async function cargarColonias() {
+    const tabla = document.getElementById('tablaColonias');
+    //Si no encuentra la tabla, detenemos la funcion
+    if (!tabla) return;
+
+    try {
+        const respuesta = await fetch('http://localhost:8000/colonias');
+        if (!respuesta) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        const colonias = await respuesta.json();
+        //Quitar el spinner
+        tabla.innerHTML = '';
+        //Si la bd esta vacia
+        if (colonias.length === 0) {
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="2" class="text-center py-4 text-muted">
+                        No hay colonias registradas aún.
+                    </td>
+                </tr>`;
+            return;
+        }
+        //Recorrer el arreglo de colonias y poner una fila por cada una
+        colonias.forEach(colonia => {
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td class="px-4 py-3 fw-medium text-dark">${colonia.nombre_colonia}</td>
+                <td class="px-4 py-3">
+                    <button class="btn btn-sm btn-outline-primary me-1 btn-editar" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-eliminar" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            //Boton eliminar
+            const btnEliminar = fila.querySelector('.btn-eliminar');
+            btnEliminar.addEventListener('click', async () => {
+                //Confirmacion del usuario
+                const confirmacion = confirm(`¿Estás seguro de eliminar la colonia "${colonia.nombre_colonia}"?`);
+                if (confirmacion) {
+                    try {
+                        //Peticion a FastAPI que borre
+                        const respuestaDelete = await fetch(`http://localhost:8000/colonias/${colonia.id_colonia}`, {
+                            method: 'DELETE'
+                        });
+                        if (respuestaDelete.ok) {
+                            alert('Colonia eliminada');
+                            cargarColonias();
+                        } else {
+                            const errorData = await respuestaDelete.json();
+                            alert(`Alerta_ ${errorData.detail}`);
+                        }
+                    } catch (error) {
+                        console.error('Error al eliminar', error);
+                        alert('No se pudo conectar con el servidor');
+                    }
+                }
+            });
+            //Boton editar
+            const btnEditar = fila.querySelector('.btn-editar');
+            btnEditar.addEventListener('click', async () => {
+                //Pedir el nuevo nombre
+                const nuevoNombre = prompt(`Editar el nombre de la colonia:`, colonia.nombre_colonia);
+                //cancelar
+                if (nuevoNombre === null) {
+                    return;
+                }
+                //limpiar espacios en blanco al inicio y final
+                const nombreLimpio = nuevoNombre.trim();
+                //validar que no este vacio
+                if (nombreLimpio === '') {
+                    alert('El nombre de la colonia no puede estar vacio');
+                    return;
+                }
+                //validar que si sea un nombre nuevo
+                if (nombreLimpio === colonia.nombre_colonia) {
+                    return;
+                }
+                try {
+                    //peticion put a fastapi
+                    const respuestaPUT = await fetch(`http://localhost:8000/colonias/${colonia.id_colonia}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nombre_colonia: nombreLimpio })
+                    });
+                    if (respuestaPUT.ok) {
+                        alert('Colonia actualizada con exito');
+                        //Volver a cargar la tabla
+                        cargarColonias();
+                    } else {
+                        const errorData = await respuestaPUT.json();
+                        alert(`Error al actualizar: ${errorData.detail}`);
+                    }
+                } catch (error) {
+                    console.error('Error al editar:', error);
+                    alert('No se pudo conectar con el servidor')
+                }
+            });
+            tabla.appendChild(fila);
+        });
+    } catch (error) {
+        console.error('Error al cargar colonias:', error);
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-center py-4 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error al conectar con el servidor.
+                </td>
+            </tr>`;
+    }
+    
+}
+
+//REGISTRAR COLONIA
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    cargarColonias();
+
+    const btnGuardarColonia = document.getElementById('btnGuardarColonia');
+    const inputNombreColonia = document.getElementById('inputNombreColonia');
+
+    if(btnGuardarColonia) {
+        btnGuardarColonia.addEventListener('click', async () => {
+            const nombreColonia = inputNombreColonia.value.trim();
+            //Validar que el campo no este vacio
+            if(!nombreColonia) {
+                alert('Por favor, escribe el nombre de la colonia');
+                return;
+            }
+            try {
+                //Peticion POST a FastAPI
+                const respuesta = await fetch('http://localhost:8000/colonias', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombre_colonia: nombreColonia
+                    })
+                });
+                const datos = await respuesta.json();
+                if (respuesta.ok) {
+                    alert('Colonia registrada con éxito');
+                    //Limpiar el campo de texto
+                    inputNombreColonia.value = '';
+                    //Cerrar el modal automaticamente con bootstrap
+                    const modalElemento = document.getElementById('nuevaColonia');
+                    const modalInstancia = bootstrap.Modal.getInstance(modalElemento);
+                    if (modalInstancia) {
+                        modalInstancia.hide();
+                    }
+                    cargarColonias();
+                } else {
+                    alert(`Error al guardar: ${datos.detail || 'Ocurrio un problema'}`);
+                }
+            } catch (error) {
+                console.error('Error en la peticion:', error);
+                alert('No se pudo conectar con el servidor backend')
+            }
+        });
+    }
+})
+
+//FIN MODULO LOGISTICA
 
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();

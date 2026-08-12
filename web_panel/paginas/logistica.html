@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logística - Agua Los Almendros</title>
+    <!--Bootstrap-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!--Bootstrap icons-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="../css/styles-index.css">
+</head>
+
+<body class="d-flex bg-light">
+
+    <!--Nav bar (Barra izquierda de navegacion)-->
+    <!-- Barra lateral-->
+    <aside class = "sidebar bg-white border-end d-flex flex-column align-items-center py-3 sticky-top">
+        <!--Logo (cuando lo tenga xd)-->
+
+        <div class = "mb-4 text-center">
+            <i class = "bi bi-droplet-fill text-primary fs-1"></i>
+        </div>
+    <!--Navegacion-->
+        <ul class = "nav nav-pills flex-column w-100 px-2 text-center">
+            <li class = "nav-item mb-2">
+                <a href="../index.html" class = "nav-link text-muted">
+                    <i class="bi bi-border-all fs-3 d-block mb-1 text-dark"></i>
+                    <small style = "font-size: 0.75 rem;">Principal</small>
+                </a>
+            </li>
+        <li class = "nav-item mb-2">
+            <a href="#" class="nav-link text-muted">
+                <i class ="bi bi-cash fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem;">Finanzas</small>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a href="#" class="nav-link text-dark active bg-light text-primary fw-bold" aria-current="page">
+                <i class = "bi bi-bus-front fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem;">Logistica</small>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a href="#" class="nav-link text-muted">
+                <i class="bi bi-clipboard2-data-fill fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem;">Analitica</small>
+            </a>
+
+        </li>
+        <li class="nav-item mb-2">
+            <a href="#" class="nav-link text-muted">
+                <i class="bi bi-gear-fill fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem;">Ajustes</small>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a id="btnSalir" href="#" class="nav-link text-muted">
+                <i class="bi bi-arrow-bar-left fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem;">Salir</small>
+            </a>
+
+        </li>
+        </ul>
+    </aside>
+
+    <!--Contenedor principal-->
+    <div class="container mt-5">
+        <!--Encabezado-->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-secondary">Gestión de Colonias</h2>
+            <!--Boton agregar colonia-->
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevaColonia">
+                <i class="bi bi-plus-lg"></i> Agregar Colonia
+            </button>
+        </div>
+        <!--tarjeta con la tabla-->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3">Nombre de la colonia</th>
+                                <th class="px-4 py-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <!--ID: tablaColonias-->
+                        <tbody id="tablaColonias">
+                            <tr>
+                                <td colspan="2" class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div> Cargando colonias...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Modal nueva colonia-->
+    <div class="modal fade" id="nuevaColonia" tabindex="-1" aria-labelledby="nuevaColoniaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevaColoniaLabel">Registrar nueva colonia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!--Formulario-->
+                    <div class="mb-3">
+                        <label for="inputNombreColonia" class="form-label">Nombre de la colonia</label>
+                        <!--ID: inputNombreColonia-->
+                        <input type="text" class="form-control" id="inputNombreColonia" placeholder="Ej. Centro, Puerto México, etc.">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!--ID: btnGuardarColonia-->
+                    <button type="button" class="btn btn-primary" id="btnGuardarColonia">Guardar Colonia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Script bootstrap-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!--JS-->
+    <script src="../js/api.js"></script>
+</body>
+</html>
