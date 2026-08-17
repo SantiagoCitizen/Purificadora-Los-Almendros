@@ -98,6 +98,44 @@
                 </div>
             </div>
         </div>
+        <!--Repartidores-->
+        <div class="d-flex justify-content-between align-items-center mt-5 mb-4">
+            <h2 class="fw-bold text-secondary">Gestión de Repartidores</h2>
+            <!--Agregar repartidor-->
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
+                <i class="bi bi-plus-lg"></i> Agregar Repartidor
+            </button>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
+                <i class="bi bi-plus-lg"></i> Asignar Rutas
+            </button>
+        </div>
+        <!--Tabla con repartidores-->
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table tabler-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3">Nombre del Repartidor</th>
+                                <th class="px-4 py-3">Ruta Asignada</th>
+                                <th class="px-4 py-3">Telefono</th>
+                                <th class="px-4 py-3">En turno</th>
+                                <th class="px-4 py-3">Contrato</th>
+                            </tr>
+                        </thead>
+                        <!--ID: tablaRepartidoresLogistica-->
+                        <tbody id="tablaRepartidoresLogistica">
+                            <tr>
+                                <td colspan="2" class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div> Cargando repartidores...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!--Modal nueva colonia-->
@@ -120,6 +158,47 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <!--ID: btnGuardarColonia-->
                     <button type="button" class="btn btn-primary" id="btnGuardarColonia">Guardar Colonia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Modal nuevo repartidor-->
+    <!--Modal nuevo repartidor-->
+    <div class="modal fade" id="nuevoRepartidor" tabindex="-1" aria-labelledby="nuevoRepartidorLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevoRepartidorLabel">Registrar nuevo repartidor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!--Formulario-->
+                    <div class="mb-3">
+                        <label for="inputNombreRepartidor" class="form-label">Nombre(s)</label>
+                        <input type="text" class="form-control" id="inputNombreRepartidor" placeholder="Ej. Juan">
+                    </div>
+                    <!-- Fila para los apellidos -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="inputPaternoRepartidor" class="form-label">Apellido Paterno</label>
+                            <input type="text" class="form-control" id="inputPaternoRepartidor" placeholder="Ej. Pérez">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputMaternoRepartidor" class="form-label">Apellido Materno <span class="text-muted">(Opcional)</span></label>
+                            <input type="text" class="form-control" id="inputMaternoRepartidor" placeholder="Ej. Gómez">
+                        </div>
+                    </div>
+                    <!-- Teléfono -->
+                    <div class="mb-3">
+                        <label for="inputTelefonoRepartidor" class="form-label">Número de Teléfono</label>
+                        <input type="tel" class="form-control" id="inputTelefonoRepartidor" placeholder="Ej. 9211234567">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!--ID: btnGuardarRepartidor-->
+                    <button type="button" class="btn btn-primary" id="btnGuardarRepartidor">Guardar Repartidor</button>
                 </div>
             </div>
         </div>
