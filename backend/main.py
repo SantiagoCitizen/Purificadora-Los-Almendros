@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import db_conexion
 from mysql.connector import Error
 from pydantic import BaseModel
+from typing import Optional
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -31,6 +32,12 @@ class NuevaColonia(BaseModel):
 
 class UpdateColonia(BaseModel):
     nombre_colonia: str
+
+class AltaRepartidor(BaseModel):
+    nombre: str
+    apellido_paterno: str
+    apellido_materno: Optional[str] = None #Puede ser nulo
+    telefono: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,11 +70,17 @@ def get_repartidores():
         cursor = conexion.cursor(dictionary=True)
 
         sql_query = """
-            SELECT
+            SELECT 
+                u.id_usuario,
+                u.nombre AS nombre_pila,
                 CONCAT(u.nombre, ' ', u.apellido_paterno) AS nombre,
-                u.telefono,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.telefono, 
+                u.en_turno, 
+                u.estatus_contrato,
                 IF(MAX(rr.estatus_disponibilidad) = 1, 'Libre', 'En Ruta') AS estado,
-                GROUP_CONCAT(c.nombre_colonia SEPARATOR ', ') AS ruta
+                COALESCE(GROUP_CONCAT(c.nombre_colonia SEPARATOR ', '), 'Sin ruta asignada') AS ruta
             FROM usuarios u
             LEFT JOIN repartidores_rutas rr ON u.id_usuario = rr.id_usuario_repartidor
             LEFT JOIN colonias c ON rr.id_colonia = c.id_colonia
@@ -352,6 +365,60 @@ def eliminar_colonia(id_colonia: int):
         if "1451" in mensaje_error:
             raise HTTPException(status_code=400, detail="No puedes borrar esta colonia porque ya está asignada a la ruta de un repartidor o a un cliente. Contacta a Soporte")
         raise HTTPException(status_code=500, detail="Error interno del servidor al intentar borrar")
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+#Ver repartidores en el modulo de logistica:
+
+
+#Dar de alta a repartidores
+@app.post("/repartidores")
+def crear_repartidor(datos: AltaRepartidor):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+    try:
+        cursor = conexion.cursor()
+        #Hasheado de contraseña
+        password_bytes = datos.telefono.encode('utf-8')
+        salt = bcrypt.gensalt()
+        password_hasheada = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+        id_rol_repartidor = 2
+        sql_query = """
+            INSERT INTO usuarios
+            (nombre, apellido_paterno, apellido_materno, telefono, password_hash, id_rol)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        #Todo empaquetado en la tupla en orden exacto
+        valores = (
+            datos.nombre,
+            datos.apellido_paterno,
+            datos.apellido_materno,
+            datos.telefono,
+            password_hasheada,
+            id_rol_repartidor
+        )
+
+        cursor.execute(sql_query, valores)
+        conexion.commit()
+
+        return {"mensaje": "Repartidor registrado correctamente", "id": cursor.lastrowid}
+    except Exception as e:
+        if conexion:
+            conexion.rollback()
+
+        mensaje_error = str(e)
+        print(f"Error en backend al crear el repartidor: {mensaje_error}")
+
+        #Manejo del error 1062: telefono duplicado
+        if "1062" in mensaje_error:
+            raise HTTPException(status_code=400, detail="El número ya está registrado en el sistema")
+
+        raise HTTPException(status_code=500, detail="Error interno del servidor al intentar guardar")
+
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()

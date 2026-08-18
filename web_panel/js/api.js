@@ -367,8 +367,118 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 })
 
+//Modulo: Ver repartidores en logistica:
+// Función exclusiva para la vista de Logística
+async function cargarRepartidoresLogistica() {
+    const tabla = document.getElementById('tablaRepartidoresLogistica');
+    
+    // Si no estamos en la página de logística (no existe la tabla), detenemos la función
+    if (!tabla) return; 
+
+    try {
+        const respuesta = await fetch('http://localhost:8000/repartidores');
+        const repartidores = await respuesta.json();
+
+        tabla.innerHTML = ''; // Limpiar el mensaje de "Cargando..."
+
+        // Recorrer la lista de repartidores
+        repartidores.forEach(repartidor => {
+            
+            // Unimos el nombre con su apellido (si tiene materno, se agrega, si no, se deja en blanco)
+            const nombreCompleto = `${repartidor.nombre} ${repartidor.apellido_materno || ''}`.trim();
+            
+            // Lógica de colores 
+            const colorTurno = repartidor.en_turno ? 'bg-success' : 'bg-secondary';
+            const textoTurno = repartidor.en_turno ? 'En turno' : 'Inactivo';
+            
+            const colorContrato = repartidor.estatus_contrato ? 'bg-primary' : 'bg-danger';
+            const textoContrato = repartidor.estatus_contrato ? 'Activo' : 'Baja';
+
+            // Fila con los datos 
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td class="px-4 py-3 fw-medium text-dark">${nombreCompleto}</td>
+                <td class="px-4 py-3 text-muted">${repartidor.ruta}</td> 
+                <td class="px-4 py-3"><i class="bi bi-telephone"></i> ${repartidor.telefono}</td>
+                <td class="px-4 py-3"><span class="badge ${colorTurno}">${textoTurno}</span></td>
+                <td class="px-4 py-3"><span class="badge ${colorContrato}">${textoContrato}</span></td>
+            `;
+            
+            tabla.appendChild(fila);
+        });
+    } catch (error) {
+        console.error("Error al cargar los repartidores en logística:", error);
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+//Modulo: Alta de repartidores
+
+const btnGuardarRepartidor = document.getElementById('btnGuardarRepartidor');
+
+if(btnGuardarRepartidor) {
+    btnGuardarRepartidor.addEventListener('click', async () => {
+        //Capturar valores de los inputs y limpiar espacios en blanco
+        const nombre = document.getElementById('inputNombreRepartidor').value.trim();
+        const paterno = document.getElementById('inputPaternoRepartidor').value.trim();
+        const materno = document.getElementById('inputMaternoRepartidor').value.trim();
+        const telefono = document.getElementById('inputTelefonoRepartidor').value.trim();
+
+        //Validacion de campos obligatorios
+        if (nombre === '' || paterno === '' || telefono === '') {
+            alert('Por favor, llena los campos obligatorios: Nombre, Apellido Paterno y Telefono');
+            return;
+        }
+    //JSON: si el apellido materno esta vacio, se manda NULL
+    const datosRepartidor = {
+        nombre: nombre,
+        apellido_paterno: paterno,
+        apellido_materno: materno === '' ? null : materno,
+        telefono: telefono
+    };
+    try {
+        //Peticion post a FastAPI
+        const respuesta = await fetch('http://localhost:8000/repartidores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datosRepartidor)
+        });
+
+        if (respuesta.ok) {
+            alert('Repartidor registado con éxito');
+            //Limpiar el formulario
+            document.getElementById('inputNombreRepartidor').value = '';
+            document.getElementById('inputPaternoRepartidor').value = '';
+            document.getElementById('inputMaternoRepartidor').value = '';
+            document.getElementById('inputTelefonoRepartidor').value = '';
+            //Cerrar el modal
+            const modalElement = document.getElementById('nuevoRepartidor');
+            const modalInstancia = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modalInstancia.hide();
+            
+            cargarRepartidoresLogistica();
+
+        } else {
+            //Errores de fastapi, como telefono duplicado
+            const errorData = await respuesta.json();
+            alert(`Atencion: ${errorData.detail}`);
+        }
+    } catch (error) {
+        alert('No se pudo conectar con el servidor')
+    }
+    });
+}
 //FIN MODULO LOGISTICA
 
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();
 cargarClientes();
+cargarRepartidoresLogistica();
