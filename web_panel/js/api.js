@@ -476,6 +476,127 @@ if(btnGuardarRepartidor) {
     }
     });
 }
+
+//Asignacion de rutas en logistica
+
+const asignarRutas = document.getElementById('asignarRutas');
+
+if (asignarRutas) {
+    //Evento que se dispara solo cuando el modal se abre
+    asignarRutas.addEventListener('show.bs.modal', async () => {
+        await cargarSelectRepartidores();
+        await cargarCheckboxesColonias();
+    });
+}
+// Cargar repartidores en el menu de rutas
+async function cargarSelectRepartidores() {
+    const select = document.getElementById('selectRepartidorAsignar');
+    select.innerHTML = '<option value="">Cargando...</option>';
+
+    try {
+        const respuesta = await fetch('http://localhost:8000/repartidores');
+        const repartidores = await respuesta.json();
+        select.innerHTML = '<option value="">-- Selecciona un repartidor --</option>';
+        
+        repartidores.forEach(rep => {
+            //misma logica que en la tabla principal con el nombre
+            const nombreCompleto = `${rep.nombre} ${rep.apellido_materno || ''}`.trim();
+            //guardar el id_usuario en el value para saber a que repartidor se asigna
+            select.innerHTML += `<option value="${rep.id_usuario}">${nombreCompleto}</option>`
+        });
+    } catch (error) {
+        console.error("Error al cargar repartidores en el select:", error);
+        select.innerHTML = '<option value="">Error al cargar datos</option>';
+    }
+}
+//Cargar rutas con checkboxes en menu de rutas
+
+async function cargarCheckboxesColonias() {
+    const contenedor = document.getElementById('contenedorCheckboxesColonias');
+    contenedor.innerHTML = '<div class="text-center text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Cargando colonias...</div>';
+    
+    try{
+        const respuesta = await fetch('http://localhost:8000/colonias');
+        const colonias = await respuesta.json();
+        //limpiar texto de cargando...
+        contenedor.innerHTML = '';
+
+        if (colonias.length === 0) {
+            contenedor.innerHTML = '<p class="text-muted text-center mb-0">No hay colonias registradas en el sistema.</p>';
+            return;
+        }
+        //Crear checkbox por cada colonia
+        colonias.forEach(colonia => {
+            const div = document.createElement('div');
+            div.className = 'form-check mb-2';
+            div.innerHTML = `
+                <input class="form-check-input colonia-checkbox" type="checkbox" value="${colonia.id_colonia}" id="checkColonia_${colonia.id_colonia}">
+                <label class="form-check-label user-select-none" style="cursor: pointer;" for="checkColonia_${colonia.id_colonia}">
+                    ${colonia.nombre_colonia}
+                </label>
+            `;
+            contenedor.appendChild(div);
+        });
+    } catch (error) {
+        console.error("Error al cargar las colonias en checkboxes:", error);
+        contenedor.innerHTML = '<p class="text-danger text-center mb-0"><i class="bi bi-x-circle"></i> Error al cargar las rutas</p>';
+    }
+}
+//Boton de guardar rutas
+
+const btnGuardarRutas = document.getElementById('btnGuardarRutas');
+
+if (btnGuardarRutas) {
+    btnGuardarRutas.addEventListener ('click', async () => {
+        //Verificar que repartidor selecciono
+        const selectRepartidor = document.getElementById('selectRepartidorAsignar');
+        const idUsuario = selectRepartidor.value;
+
+        if(!idUsuario) {
+            alert('Por favor, selecciona un repartidor en el paso 1');
+            return;
+        }
+        //Recolectar todos los checkbox marcados
+        const checkboxesMarcados = document.querySelectorAll('.colonia-checkbox:checked');
+        //Se convierte la lista de cuadritos en un arreglo de puros ids
+        const coloniasIds = Array.from(checkboxesMarcados).map(checkbox => parseInt(checkbox.value));
+        //Bloquear el boton temporalmente para evitar el doble clic
+        const textoOriginal = btnGuardarRutas.innerHTML;
+        btnGuardarRutas.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        btnGuardarRutas.disabled = true;
+
+        try {
+            //hacer envio post a la ruta de fastapi
+            const respuesta = await fetch(`http://localhost:8000/repartidores/${idUsuario}/rutas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ colonias: coloniasIds})
+            });
+            if (respuesta.ok) {
+                alert('Rutas asignadas y actualizadas correctamente');
+                //Cerrar la ventana
+                const modalElement = document.getElementById('asignarRutas');
+                const modalInstancia = bootstrap.Modal.getInstance(modalElement);
+                modalInstancia.hide();
+                //Volver a cargar la tabla para que aparezcan las colonias sin tener que recargar la pagina
+                cargarRepartidoresLogistica();
+            } else {
+                const errorData = await respuesta.json();
+                alert(`Error al guardar: ${errorData.detail}`);
+            }
+        } catch (error) {
+            console.error("Error al asignar las rutas:", error);
+            alert('Error con la conexion con el servidor');
+        } finally {
+            //devolver el boton a la normalidad sin importar que pase
+            btnGuardarRutas.innerHTML = textoOriginal;
+            btnGuardarRutas.disabled = false;
+        }
+    });
+}
+
 //FIN MODULO LOGISTICA
 
 // Ejecutar las funciones al mismo tiempo

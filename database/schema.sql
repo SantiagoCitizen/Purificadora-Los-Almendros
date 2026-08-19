@@ -82,3 +82,9 @@ create table if not exists pedidos (
 #Modificacion: Columna tarifa especial
 ALTER TABLE usuarios 
 ADD COLUMN tarifa_especial float null AFTER rfc;
+
+#Columna en usuarios para saber si estan trabajando hoy (registro de asistencia)
+ALTER TABLE usuarios ADD COLUMN en_turno boolean default false;
+
+#Columna en usuarios para saber si sigue siendo empleado (si sigue contratado)
+ALTER TABLE usuarios ADD COLUMN estatus_contrato boolean default true;

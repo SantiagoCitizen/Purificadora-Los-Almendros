@@ -105,7 +105,7 @@
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
                 <i class="bi bi-plus-lg"></i> Agregar Repartidor
             </button>
-            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#asignarRutas">
                 <i class="bi bi-plus-lg"></i> Asignar Rutas
             </button>
         </div>
@@ -201,6 +201,49 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!--Modal Asignar rutas-->
+    <div class="modal fade" id="asignarRutas" tabindex="-1" aria-labelledby="asignarRutas" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-primary" id="asignarRutas">
+                        <i class="bi bi-map"></i> Asignar Rutas a Repartidores
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!--Seleccion de repartidores-->
+                    <div class="mb-4">
+                        <label for="selectRepartidorAsignar" class="form-label fw-semibold">1. Selecciona al repartidor</label>
+                        <select class="form-select" id="selectRepartidorAsignar">
+                            <option value="">Cargando repartidores...</option>
+                        </select>
+                    </div>
+                    <!--Seleccion de colonias-->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">2. Selecciona las colonias (Rutas)</label>
+                        <!--Contenedor scroll-->
+                        <div id="contenedorCheckboxesColonias" class="border p-3 rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
+                            <div class="text-center text-muted py-3">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div> Cargando colonias...
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!--ID: btnGuardarRutas-->
+                    <button type="button" class="btn btn-primary" id="btnGuardarRutas">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
     <!--Script bootstrap-->

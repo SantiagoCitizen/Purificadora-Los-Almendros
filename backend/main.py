@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import db_conexion
 from mysql.connector import Error
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -39,6 +39,9 @@ class AltaRepartidor(BaseModel):
     apellido_materno: Optional[str] = None #Puede ser nulo
     telefono: str
 
+class AsignarRutas(BaseModel):
+    colonias: List[int]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -56,7 +59,7 @@ def raiz():
 
 #--------------------------- Apartado principal y login ----------------------------------
 
-#Devuelve llos repartidores al panel web de administracion
+#Devuelve llos repartidores al panel web de administracion y logistica
 @app.get("/repartidores")
 def get_repartidores():
     try:
@@ -79,7 +82,7 @@ def get_repartidores():
                 u.telefono, 
                 u.en_turno, 
                 u.estatus_contrato,
-                IF(MAX(rr.estatus_disponibilidad) = 1, 'Libre', 'En Ruta') AS estado,
+                IF(MAX(rr.estatus_disponibilidad) = 0, 'En Ruta', 'Libre') AS estado,
                 COALESCE(GROUP_CONCAT(c.nombre_colonia SEPARATOR ', '), 'Sin ruta asignada') AS ruta
             FROM usuarios u
             LEFT JOIN repartidores_rutas rr ON u.id_usuario = rr.id_usuario_repartidor
@@ -370,8 +373,6 @@ def eliminar_colonia(id_colonia: int):
             cursor.close()
         if conexion and conexion.is_connected():
             conexion.close()
-#Ver repartidores en el modulo de logistica:
-
 
 #Dar de alta a repartidores
 @app.post("/repartidores")
@@ -419,6 +420,41 @@ def crear_repartidor(datos: AltaRepartidor):
 
         raise HTTPException(status_code=500, detail="Error interno del servidor al intentar guardar")
 
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Asignar rutas a repartidores
+@app.post("/repartidores/{id_usuario}/rutas")
+def guardar_rutas_repartidor(id_usuario: int, datos: AsignarRutas):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor()
+        #Borrar rutas que antes tenia el repartidor
+        sql_delete = "DELETE FROM repartidores_rutas WHERE id_usuario_repartidor = %s"
+        cursor.execute(sql_delete, (id_usuario,))
+
+        #Si el arreglo trae colonias, se inserta una por una
+        if len(datos.colonias) > 0:
+            sql_query = """
+                INSERT INTO repartidores_rutas
+                (id_usuario_repartidor, id_colonia, estatus_disponibilidad)
+                VALUES (%s, %s, 1)
+            """
+        valores = [(id_usuario, id_colonia) for id_colonia in datos.colonias]
+        cursor.executemany(sql_query, valores)
+
+        conexion.commit()
+        return {"mensaje": "Rutas actualizadas correctamente"}
+    except Exception as e:
+        conexion.rollback()
+        print(f"Error al asignar rutas: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al guardar las rutas")
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()
