@@ -39,6 +39,9 @@ class AltaRepartidor(BaseModel):
     apellido_materno: Optional[str] = None #Puede ser nulo
     telefono: str
 
+class BajaRepartidor(BaseModel):
+    id_reemplazo: Optional[int] = None
+
 class AsignarRutas(BaseModel):
     colonias: List[int]
 
@@ -420,6 +423,50 @@ def crear_repartidor(datos: AltaRepartidor):
 
         raise HTTPException(status_code=500, detail="Error interno del servidor al intentar guardar")
 
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Dar de baja a repartidores
+@app.put("/repartidores/{id_usuario}/baja")
+def baja_repartidor(id_usuario: int, datos: BajaRepartidor):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor()
+        #Baja al repartidor
+        sql_query = """
+            UPDATE usuarios
+            SET estatus_contrato = 0, en_turno = 0
+            WHERE id_usuario = %s AND id_rol = 2
+        """
+
+        cursor.execute(sql_query, (id_usuario,))
+
+        #Traspaso de ruta a otro repartidor
+        if datos.id_reemplazo:
+            traspaso = """
+                UPDATE repartidores_rutas
+                SET id_usuario_repartidor = %s
+                WHERE id_usuario_repartidor = %s
+            """
+            cursor.execute(traspaso, (datos.id_reemplazo, id_usuario))
+        else:
+            #Si no se elije un reemplazo, las rutas se quedan sin repartidor
+            delete = "DELETE FROM repartidores_rutas WHERE id_usuario_repartidor = %s"
+            cursor.execute(delete, (id_usuario,))
+
+        conexion.commit()
+        return {"mensaje": "Repartidor dado de baja y rutas actualizadas"}
+
+    except Exception as e:
+        conexion.rollback()
+        print(f"Error al dar de baja: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al procesar la baja del repartidor")
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()

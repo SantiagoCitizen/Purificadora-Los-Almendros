@@ -69,7 +69,7 @@
     <div class="container mt-5">
         <!--Encabezado-->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold text-secondary">Gestión de Colonias</h2>
+            <h2 class="fw-bold text-secondary">Colonias</h2>
             <!--Boton agregar colonia-->
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevaColonia">
                 <i class="bi bi-plus-lg"></i> Agregar Colonia
@@ -100,13 +100,16 @@
         </div>
         <!--Repartidores-->
         <div class="d-flex justify-content-between align-items-center mt-5 mb-4">
-            <h2 class="fw-bold text-secondary">Gestión de Repartidores</h2>
+            <h2 class="fw-bold text-secondary">Repartidores</h2>
             <!--Agregar repartidor-->
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
                 <i class="bi bi-plus-lg"></i> Agregar Repartidor
             </button>
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#asignarRutas">
                 <i class="bi bi-plus-lg"></i> Asignar Rutas
+            </button>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#bajaRepartidor">
+                <i class="bi bi-arrow-down-short"></i> Dar Baja
             </button>
         </div>
         <!--Tabla con repartidores-->
@@ -198,6 +201,49 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <!--ID: btnGuardarRepartidor-->
                     <button type="button" class="btn btn-primary" id="btnGuardarRepartidor">Guardar Repartidor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Modal Baja de Repartidor-->
+    <div class="modal fade" id="bajaRepartidor" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Dar de baja a Repartidor
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <!-- Seleccionar a quien dar de baja -->
+                    <div class="mb-3">
+                        <label for="selectRepartidorDespedir" class="form-label fw-bold">1. Selecciona al repartidor a dar de baja:</label>
+                        <select class="form-select border-danger" id="selectRepartidorDespedir">
+                            <option value="">Cargando...</option>
+                            
+                        </select>
+                    </div>
+
+                    <!-- Seleccionar a quien pasarle la ruta -->
+                    <div class="alert alert-warning mt-3">
+                        <label for="selectReemplazoBaja" class="form-label fw-bold mb-1">
+                            <i class="bi bi-arrow-left-right"></i> 2. Traspaso de Rutas
+                        </label>
+                        <p class="small mb-2">Selecciona a un compañero para que herede las colonias (opcional):</p>
+                        <select class="form-select border-warning" id="selectReemplazoBaja" disabled>
+                            <option value="">-- Primero selecciona a quién dar de baja --</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarBaja">
+                        <i class="bi bi-person-x"></i> Confirmar Baja
+                    </button>
                 </div>
             </div>
         </div>

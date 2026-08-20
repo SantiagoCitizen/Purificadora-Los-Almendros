@@ -477,6 +477,132 @@ if(btnGuardarRepartidor) {
     });
 }
 
+//Modulo: baja de repartidores
+// ==========================================
+// MÓDULO: BAJA DE REPARTIDORES
+// ==========================================
+
+// 1. Llenar listas al abrir el modal
+const modalBajaRepartidor = document.getElementById('bajaRepartidor');
+let listaRepartidoresActivos = [];
+
+if (modalBajaRepartidor) {
+    modalBajaRepartidor.addEventListener('show.bs.modal', async () => {
+        const selectDespedir = document.getElementById('selectRepartidorDespedir');
+        const selectReemplazo = document.getElementById('selectReemplazoBaja');
+
+        // Escudo: Si existen las listas, las modificamos
+        if (selectDespedir && selectReemplazo) {
+            selectDespedir.innerHTML = '<option value="">Cargando...</option>';
+            selectReemplazo.innerHTML = '<option value="">-- Primero selecciona a quién dar de baja --</option>';
+            selectReemplazo.disabled = true;
+
+            try {
+                const respuesta = await fetch('http://localhost:8000/repartidores');
+                const repartidores = await respuesta.json();
+                
+                // Filtrar solo los que siguen trabajando
+                listaRepartidoresActivos = repartidores.filter(r => r.estatus_contrato === 1);
+
+                selectDespedir.innerHTML = '<option value="">-- Selecciona a quién dar de baja --</option>';
+                listaRepartidoresActivos.forEach(rep => {
+                    const nombre = `${rep.nombre_pila} ${rep.apellido_paterno}`.trim();
+                    selectDespedir.innerHTML += `<option value="${rep.id_usuario}">${nombre}</option>`;
+                });
+            } catch (error) {
+                console.error(error);
+                selectDespedir.innerHTML = '<option value="">Error al cargar datos</option>';
+            }
+        }
+    });
+}
+
+// 2. Evento cuando cambias de repartidor en la primera lista
+const selectDespedirDOM = document.getElementById('selectRepartidorDespedir');
+
+// Escudo: Solo agregamos el evento si el selector existe en la página
+if (selectDespedirDOM) {
+    selectDespedirDOM.addEventListener('change', (evento) => {
+        const selectReemplazo = document.getElementById('selectReemplazoBaja');
+        if (!selectReemplazo) return; // Escudo extra por si acaso
+
+        const idDespedido = parseInt(evento.target.value); 
+
+        // Si se regresa a la opción por defecto
+        if (!idDespedido) {
+            selectReemplazo.innerHTML = '<option value="">-- Primero selecciona a quién dar de baja --</option>';
+            selectReemplazo.disabled = true;
+            return;
+        }
+
+        // Se habilita y se llena la lista de reemplazo
+        selectReemplazo.disabled = false;
+        selectReemplazo.innerHTML = '<option value="">-- Dejar rutas sin asignar --</option>';
+
+        listaRepartidoresActivos.forEach(rep => {
+            // Llenar todos menos al que se despide
+            if (rep.id_usuario !== idDespedido) {
+                const nombre = `${rep.nombre_pila} ${rep.apellido_paterno}`.trim();
+                selectReemplazo.innerHTML += `<option value="${rep.id_usuario}">${nombre}</option>`;
+            }
+        });
+    });
+}
+
+// 3. Confirmar baja y mandarlo a FastAPI
+const btnConfirmarBaja = document.getElementById('btnConfirmarBaja');
+
+// Escudo: Solo escucha el clic si el botón existe
+if (btnConfirmarBaja) {
+    btnConfirmarBaja.addEventListener('click', async () => {
+        const selectDespedir = document.getElementById('selectRepartidorDespedir');
+        const selectReemplazo = document.getElementById('selectReemplazoBaja');
+        
+        // Verificamos de nuevo que existan en el momento del clic
+        if (!selectDespedir || !selectReemplazo) return;
+
+        const idUsuario = selectDespedir.value;
+        const idReemplazo = selectReemplazo.value;
+
+        if (!idUsuario) {
+            alert('Por favor, selecciona al repartidor que deseas dar de baja');
+            return;
+        }
+        
+        const textoOriginal = btnConfirmarBaja.innerHTML;
+        btnConfirmarBaja.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+        btnConfirmarBaja.disabled = true;
+
+        try {
+            const payload = {
+                id_reemplazo: idReemplazo === "" ? null : parseInt(idReemplazo)
+            };
+
+            const respuesta = await fetch(`http://localhost:8000/repartidores/${idUsuario}/baja`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            if (respuesta.ok) {
+                alert('Baja procesada y rutas actualizadas correctamente');
+                // Cerrar modal y actualizar la tabla
+                const modalInstancia = bootstrap.Modal.getInstance(document.getElementById('bajaRepartidor'));
+                if(modalInstancia) modalInstancia.hide();
+                cargarRepartidoresLogistica();
+            } else {
+                const errorData = await respuesta.json();
+                alert(`Error: ${errorData.detail}`);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert('No se pudo conectar con el servidor');
+        } finally {
+            btnConfirmarBaja.innerHTML = textoOriginal;
+            btnConfirmarBaja.disabled = false;
+        }
+    });
+}
 //Asignacion de rutas en logistica
 
 const asignarRutas = document.getElementById('asignarRutas');
