@@ -622,9 +622,11 @@ async function cargarSelectRepartidores() {
     try {
         const respuesta = await fetch('http://localhost:8000/repartidores');
         const repartidores = await respuesta.json();
+        //Filtrar solo los empleados con contrato activo
+        const repartidoresActivos = repartidores.filter(rep => rep.estatus_contrato === 1);
         select.innerHTML = '<option value="">-- Selecciona un repartidor --</option>';
         
-        repartidores.forEach(rep => {
+        repartidoresActivos.forEach(rep => {
             //misma logica que en la tabla principal con el nombre
             const nombreCompleto = `${rep.nombre} ${rep.apellido_materno || ''}`.trim();
             //guardar el id_usuario en el value para saber a que repartidor se asigna

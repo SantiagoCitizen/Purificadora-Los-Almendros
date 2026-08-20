@@ -46,7 +46,7 @@ def get_repartidores():
                 u.en_turno, 
                 u.estatus_contrato,
                 IF(MAX(rr.estatus_disponibilidad) = 0, 'En Ruta', 'Libre') AS estado,
-                COALESCE(GROUP_CONCAT(c.nombre_colonia SEPARATOR ', '), 'Sin ruta asignada') AS ruta
+                COALESCE(GROUP_CONCAT(DISTINCT c.nombre_colonia SEPARATOR ', '), 'Sin ruta asignada') AS ruta
             FROM usuarios u
             LEFT JOIN repartidores_rutas rr ON u.id_usuario = rr.id_usuario_repartidor
             LEFT JOIN colonias c ON rr.id_colonia = c.id_colonia
@@ -179,17 +179,29 @@ def baja_repartidor(id_usuario: int, datos: BajaRepartidor):
 
         #Traspaso de ruta a otro repartidor
         if datos.id_reemplazo:
-            traspaso = """
-                UPDATE repartidores_rutas
-                SET id_usuario_repartidor = %s
-                WHERE id_usuario_repartidor = %s
-            """
-            cursor.execute(traspaso, (datos.id_reemplazo, id_usuario))
-        else:
-            #Si no se elije un reemplazo, las rutas se quedan sin repartidor
-            delete = "DELETE FROM repartidores_rutas WHERE id_usuario_repartidor = %s"
-            cursor.execute(delete, (id_usuario,))
+            #Evitar duplicados
+            #Obtener las colonias que tiene el repartidor a dar de baja
+            cursor.execute("SELECT id_colonia FROM repartidores_rutas WHERE id_usuario_repartidor = %s", (id_usuario,))
+            colonias_despedido = [fila[0] for fila in cursor.fetchall()]
+            #Filtrar y sacar las colonias que no tiene el repartidor a traspasar
 
+            #Insertar las colonias que no tiene
+            if colonias_despedido:
+                #Obtener las colonias que ya tiene el repartidor que será el reemplazo
+                cursor.execute("SELECT id_colonia FROM repartidores_rutas WHERE id_usuario_repartidor = %s", (datos.id_reemplazo,))
+                colonias_reemplazo = [fila[0] for fila in cursor.fetchall()]
+
+
+                colonias_traspaso = [c for c in colonias_despedido if c not in colonias_reemplazo]
+                if colonias_traspaso:
+                    insert = """
+                        INSERT INTO repartidores_rutas (id_usuario_repartidor, id_colonia, estatus_disponibilidad)
+                        VALUES (%s, %s, 1)
+                    """
+                    valores = [(datos.id_reemplazo, c) for c in colonias_traspaso]
+                    cursor.executemany(insert, valores)
+            #Limpiar 
+        cursor.execute("DELETE FROM repartidores_rutas WHERE id_usuario_repartidor = %s", (id_usuario,))
         conexion.commit()
         return {"mensaje": "Repartidor dado de baja y rutas actualizadas"}
 
