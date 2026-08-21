@@ -1,7 +1,12 @@
 //Evitar que entren al index sin logearse
 function verificarAcceso() {
     if (!sessionStorage.getItem('tokenVIP')) {
-        window.location.replace('login.html')
+        //Detecta si vamos a una pantalla dentro de la carpeta "paginas"
+        if (window.location.pathname.includes('/paginas/')) {
+            window.location.replace('../login.html');
+        } else {
+            window.location.replace('login.html')
+        }
     }
 }
 //Revision al cargar la pagina
