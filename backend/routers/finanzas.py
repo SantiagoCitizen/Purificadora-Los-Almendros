@@ -124,3 +124,48 @@ def get_incidencias():
     finally:
         cursor.close()
         conexion.close()
+
+#Aprobar transferencias
+@router.put("/transferencias/{id_pedido}/aprobar")
+def aprobar_transferencia(id_pedido: int):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la bd")
+    try:
+        cursor = conexion.cursor()
+        #Actualizar el pago a confirmado
+        sql_query = "UPDATE pedidos SET pago_confirmado = 1 WHERE id_pedido = %s"
+        cursor.execute(sql_query, (id_pedido,))
+        conexion.commit()
+        return {"Mensaje": "Transferencia aprobada"}
+    except Exception as e:
+        conexion.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Rechazar transferencia
+@router.put("/transferencias/{id_pedido}/rechazar")
+def rechazar_transferencias(id_pedido: int):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la bd")
+
+    try:
+        cursor = conexion.cursor()
+        #Rechazar la transferencia, poner nota de estatus de alerta y su notita de campo
+        sql_query = "UPDATE pedidos SET estatus_entrega = 'Pago Rechazado', notas_campo = 'Comprobante rechazado por administracion' WHERE id_pedido = %s"
+        cursor.execute(sql_query, (id_pedido,))
+        conexion.commit()
+        return {"Mensaje": "Transferencia rechazada"}
+    except Exception as e:
+        conexion.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
