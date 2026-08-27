@@ -169,3 +169,35 @@ def rechazar_transferencias(id_pedido: int):
             cursor.close()
         if conexion and conexion.is_connected():
             conexion.close()
+
+#Venta por repartidor
+@router.get("/conciliacion/{id_repartidor}")
+def get_detalle_repartidor(id_repartidor: int):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        sql_query = """
+            SELECT
+            p.id_pedido,
+            CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS cliente,
+                p.monto_total,
+                p.tipo_pago,
+                p.pago_confirmado,
+                p.estatus_entrega
+            FROM pedidos p
+            JOIN usuarios u ON p.id_cliente = u.id_usuario
+            WHERE p.id_repartidor_asignado = %s AND DATE(p.fecha_hora_creacion) = CURDATE()
+            ORDER BY p.id_pedido ASC;
+        """
+        cursor.execute(sql_query, (id_repartidor,))
+        return cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()

@@ -145,7 +145,83 @@ async function cargarIncidencias() {
     }
 }
 
-function verComprobante(url) { alert("Abrir modal de comprobante: " + url); }
-function aprobarTransferencia(idPedido) { alert("Aprobar pedido #" + idPedido); }
-function rechazarTransferencia(idPedido) { alert("Rechazar pedido #" + idPedido); }
-function verDetalleRepartidor(idRepartidor) { alert("Abrir desglose del repartidor ID: " + idRepartidor); }
+//Aprobar transferencia
+async function aprobarTransferencia(idPedido) {
+    if (!confirm(`¿Estás seguro de APROBAR la transferencia del pedido #${idPedido}?`)) return;
+    try {
+        const respuesta = await fetch(`${URL_FINANZAS}/transferencias/${idPedido}/aprobar`, { method: 'PUT' });
+        if (respuesta.ok) {
+            cargarTransferencias();
+            cargarConciliacion();
+            cargarKPIs();
+        } else alert("Error al intentar aprobar la transferencia");
+    } catch (error) {alert("Fallo de conexion");}
+}
+
+//Rechazar transferencia
+async function rechazarTransferencia(idPedido) {
+    if (!confirm(`¿Estás seguro de RECHAZAR el pago del pedido #${idPedido}?`)) return;
+    try {
+        const respuesta = await fetch(`${URL_FINANZAS}/transferencias/${idPedido}/rechazar`, { method: 'PUT' });
+        if (respuesta.ok) {
+            cargarTransferencias();
+            cargarIncidencias();
+            cargarKPIs();
+        } else alert("Error al rechazar");
+    } catch (error) { alert ("Fallo de conexion");}
+}
+
+//Mostrar el comprobante de pago
+function verComprobante(url) {
+    //url de la imagen
+    document.getElementById('imgComprobante').src = url;
+    //Boostrap lo abriara en una ventana
+    const modal = new bootstrap.Modal(document.getElementById('modalComprobante'));
+    modal.show();
+}
+
+//Resumen de por repartidor
+async function verDetalleRepartidor(id_repartidor) {
+    const tabla = document.getElementById('tablaDetalleRepartidor');
+    tabla.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Cargando detalles...</td></tr>';
+
+    //Se abre el modal mientras carga
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalleRepartidor'));
+    modal.show()
+    
+    try {
+        const respuesta = await fetch (`${URL_FINANZAS}/conciliacion/${idRepartidor}`);
+        const detalles = await respuesta.json();
+
+        tabla.innerHTML = '';
+        if (detalles.length === 0) {
+            tabla.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay pedidos registrados para este repartidor hoy.</td></tr>';
+            return;
+        }
+        detalles.forEach(d => {
+            const monto = parseFloat(d.monto_total).toLocaleString('es-MX', {style: 'currency', currency: 'MXN'});
+
+            //Diferente color dependiendo del pago
+            let badgePago = d.tipo_pago === 'Efectivo' 
+                ? `<span class="badge bg-success">Efectivo</span>` 
+                : (d.pago_confirmado ? `<span class="badge bg-primary">Transf. Validada</span>` : `<span class="badge bg-warning text-dark">Transf. Pendiente</span>`);
+            
+            //Diferente color dependiendo del estatus
+            let badgeEstatus = d.estatus_entrega === 'Entregado' 
+                ? `<span class="badge bg-success">Entregado</span>` 
+                : `<span class="badge bg-danger">${d.estatus_entrega}</span>`;
+            
+            tabla.innerHTML += `
+                <tr>
+                    <td class="fw-bold">#${d.id_pedido}</td>
+                    <td>${d.cliente}</td>
+                    <td class="fw-bold">${monto}</td>
+                    <td>${badgePago}</td>
+                    <td>${badgeEstatus}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        tabla.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar el detalle.</td></tr>';
+    }
+}
