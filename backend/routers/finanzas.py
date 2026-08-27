@@ -18,7 +18,7 @@ def get_kpis_hoy():
         #Una sola consulta que traiga todos los datos de una
         sql_query = """
             SELECT
-            (SELECT COUNT(*) FROM pedidos WHERE tipo_pago = 'Transferencia' AND pago_confirmado = 0) AS transferencias_pendientes,
+            (SELECT COUNT(*) FROM pedidos WHERE tipo_pago = 'Transferencia' AND pago_confirmado = 0 AND estatus_entrega != 'Pago Rechazado') AS transferencias_pendientes,
             (SELECT COUNT(*) FROM pedidos WHERE (estatus_entrega != 'Entregado' OR notas_campo IS NOT NULL) AND DATE(fecha_hora_creacion) = CURDATE()) AS alertas,
             (SELECT COALESCE(SUM(monto_total), 0) FROM pedidos WHERE DATE(fecha_hora_creacion) = CURDATE()) AS ventas_totales,
             (SELECT COALESCE(SUM(cantidad_garrafones), 0) FROM pedidos WHERE DATE(fecha_hora_creacion) = CURDATE()) AS garrafones_totales;
@@ -53,7 +53,9 @@ def get_transferencias():
                 DATE_FORMAT(p.fecha_hora_creacion, '%H:%i hrs') AS hora_solicitud
             FROM pedidos p
             JOIN usuarios u ON p.id_cliente = u.id_usuario
-            WHERE p.tipo_pago = 'Transferencia' AND p.pago_confirmado = 0
+            WHERE p.tipo_pago = 'Transferencia' 
+            AND p.pago_confirmado = 0 
+            AND p.estatus_entrega != 'Pago Rechazado'
             ORDER BY p.fecha_hora_creacion DESC;
         """
         cursor.execute(sql_query)

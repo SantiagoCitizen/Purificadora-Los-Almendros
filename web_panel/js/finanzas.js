@@ -149,7 +149,7 @@ async function cargarIncidencias() {
 async function aprobarTransferencia(idPedido) {
     if (!confirm(`¿Estás seguro de APROBAR la transferencia del pedido #${idPedido}?`)) return;
     try {
-        const respuesta = await fetch(`${URL_FINANZAS}/transferencias/${idPedido}/aprobar`, { method: 'PUT' });
+        const respuesta = await fetch(`${url_finanzas}/transferencias/${idPedido}/aprobar`, { method: 'PUT' });
         if (respuesta.ok) {
             cargarTransferencias();
             cargarConciliacion();
@@ -162,7 +162,7 @@ async function aprobarTransferencia(idPedido) {
 async function rechazarTransferencia(idPedido) {
     if (!confirm(`¿Estás seguro de RECHAZAR el pago del pedido #${idPedido}?`)) return;
     try {
-        const respuesta = await fetch(`${URL_FINANZAS}/transferencias/${idPedido}/rechazar`, { method: 'PUT' });
+        const respuesta = await fetch(`${url_finanzas}/transferencias/${idPedido}/rechazar`, { method: 'PUT' });
         if (respuesta.ok) {
             cargarTransferencias();
             cargarIncidencias();
@@ -190,7 +190,7 @@ async function verDetalleRepartidor(id_repartidor) {
     modal.show()
     
     try {
-        const respuesta = await fetch (`${URL_FINANZAS}/conciliacion/${idRepartidor}`);
+        const respuesta = await fetch (`${url_finanzas}/conciliacion/${id_repartidor}`);
         const detalles = await respuesta.json();
 
         tabla.innerHTML = '';
