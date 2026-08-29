@@ -225,3 +225,42 @@ async function verDetalleRepartidor(id_repartidor) {
         tabla.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar el detalle.</td></tr>';
     }
 }
+
+//Boton: Exportar a Excel Ventas Por Repartidor y Transferencias
+function exportarExcel(idTabla, nombreArchivo) {
+    //Tabla del html
+    const tabla = document.getElementById(idTabla);
+    //SheetJS
+    //Aqui el sheet hace el archivo excel
+    const libro = XLSX.utils.table_to_book(tabla, {sheet: "Reporte del Dia"});
+    //Se agarra la fecha del dia para ponersela al nombre del archivo 
+    const fecha = new Date().toLocaleDateString('es-MX').replace(/\//g, '-');
+    //Se descarga el archivo
+    XLSX.writeFile(libro, `${nombreArchivo}_${fecha}.xlsx`);
+}
+
+//Boton: Exportar a PDF Ventas por Repartidor y Transferencias
+function exportarPDF(idTabla, tituloReporte) {
+    //Se inicializa el creador de PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const fecha = new Date().toLocaleDateString('es-MX');
+    
+    //PDF:
+    //Titulo y fecha en la parte de arriba
+    doc.setFontSize(16);
+    doc.text(tituloReporte, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Fecha de generación: ${fecha}`, 14, 22);
+
+    //AutoTable 
+    doc.autoTable({
+        html: `#${idTabla}`,
+        startY: 28,
+        theme: 'striped',
+        headStyles: {fillColor: [13, 110, 253]},
+        styles: {fontSize: 9}
+    });
+    //Se descarga el archivo
+    doc.save(`${tituloReporte.replace(/ /g, '-')}_${fecha}.pdf`);
+}
