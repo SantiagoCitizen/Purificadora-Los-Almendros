@@ -235,7 +235,7 @@ function exportarExcel(idTabla, nombreArchivo) {
     const libro = XLSX.utils.table_to_book(tabla, {sheet: "Reporte del Dia"});
     //Se agarra la fecha del dia para ponersela al nombre del archivo 
     const fecha = new Date().toLocaleDateString('es-MX').replace(/\//g, '-');
-    //Se descarga el archivo
+    //Descarga del archivo
     XLSX.writeFile(libro, `${nombreArchivo}_${fecha}.xlsx`);
 }
 
@@ -261,6 +261,6 @@ function exportarPDF(idTabla, tituloReporte) {
         headStyles: {fillColor: [13, 110, 253]},
         styles: {fontSize: 9}
     });
-    //Se descarga el archivo
+    //Descarga del archivo
     doc.save(`${tituloReporte.replace(/ /g, '-')}_${fecha}.pdf`);
 }
