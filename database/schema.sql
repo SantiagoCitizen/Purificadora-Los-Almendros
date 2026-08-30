@@ -88,3 +88,13 @@ ALTER TABLE usuarios ADD COLUMN en_turno boolean default false;
 
 #Columna en usuarios para saber si sigue siendo empleado (si sigue contratado)
 ALTER TABLE usuarios ADD COLUMN estatus_contrato boolean default true;
+
+CREATE TABLE IF NOT EXISTS configuracion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    precio_garrafon DECIMAL(10,2) NOT NULL,
+    whatsapp VARCHAR(20) NOT NULL
+);
+
+#Valores base de la configuracion
+INSERT INTO configuracion (precio_garrafon, whatsapp) 
+VALUES (26.00, '9210000000');

@@ -1,0 +1,151 @@
+    <!doctype html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ajustes - Agua Los Almendros</title>
+
+        <!--Bootstrap-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        <!--Bootstrap icons-->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
+        <link rel="stylesheet" href="../css/styles-index.css" />
+    </head>
+    <body class="d-flex bg-light">
+        <!-- Barra lateral -->
+        <aside class="sidebar bg-white border-end d-flex flex-column align-items-center py-3 sticky-top" style="height: 100vh">
+        <div class="mb-4 text-center">
+            <i class="bi bi-droplet-fill text-primary fs-1"></i>
+        </div>
+        <ul class="nav nav-pills flex-column w-100 px-2 text-center">
+            <li class="nav-item mb-2">
+            <a href="../index.html" class="nav-link text-muted">
+                <i class="bi bi-border-all fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Principal</small>
+            </a>
+            </li>
+            <li class="nav-item mb-2">
+            <a href="finanzas.html" class="nav-link text-muted">
+                <i class="bi bi-cash fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Finanzas</small>
+            </a>
+            </li>
+            <li class="nav-item mb-2">
+            <a href="logistica.html" class="nav-link text-muted">
+                <i class="bi bi-bus-front fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Logistica</small>
+            </a>
+            </li>
+            <li class="nav-item mb-2">
+            <a href="#" class="nav-link text-muted">
+                <i class="bi bi-clipboard2-data-fill fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Analitica</small>
+            </a>
+            </li>
+            <li class="nav-item mb-2">
+            <a href="#" class="nav-link text-dark active bg-light text-primary fw-bold" aria-current="page">
+                <i class="bi bi-gear-fill fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Ajustes</small>
+            </a>
+            </li>
+            <li class="nav-item mb-2 mt-auto">
+            <a id="btnSalir" href="#" class="nav-link text-muted">
+                <i class="bi bi-arrow-bar-left fs-3 d-block mb-1"></i>
+                <small style="font-size: 0.75rem">Salir</small>
+            </a>
+            </li>
+        </ul>
+        </aside>
+
+        <!--Contenedor principal-->
+        <div class="flex-grow-1 d-flex flex-column" style="height: 100vh; overflow-y: auto">
+        <!--Encabezado-->
+        <header class="bg-white border-bottom py-3 px-4 d-flex align-items-center">
+            <h4 class="mb-0 fw-bold"> Agua Los Almendros
+            <span class="text-muted fw-normal ms-2 fs-5"> - Ajustes del Sistema</span>
+            </h4>
+        </header>
+
+        <main class="container-fluid p-4">
+            <div class="row">
+            <!--  Configuracion del Negocio -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="mb-0 fw-bold text-primary">
+                    <i class="bi bi-shop"></i> - Configuración del Negocio
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="formAjustesNegocio">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-muted">Precio Base del Garrafón (MXN)</label>
+                        <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light border-end-0">$</span>
+                        <input type="number" class="form-control border-start-0" id="inputPrecioGarrafon" step="0.50" min="1" required/>
+                        </div>
+                        <small class="text-muted">Este precio se aplicará a los nuevos pedidos.</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-muted">WhatsApp de Atención</label>
+                        <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-whatsapp text-success"></i></span>
+                        <input type="tel" class="form-control" id="inputWhatsapp" placeholder="Ej. 9211234567" required/>
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-floppy"></i> Guardar Cambios
+                        </button>
+                    </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+
+            <!-- Seguridad y Perfil -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="mb-0 fw-bold text-danger">
+                    <i class="bi bi-shield-lock"></i> - Seguridad del Panel de Administración
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="formSeguridad">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted">Cambiar Teléfono de Inicio de Sesión</label>
+                        <input type="text" class="form-control" id="inputNewTelefono" required/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="inputNuevaPass" placeholder="Dejar en blanco para no cambiar"/>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-muted">Confirmar Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="inputConfirmarPass"/>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-danger px-4 shadow-sm">
+                        <i class="bi bi-key"></i> Actualizar Seguridad
+                        </button>
+                    </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+            </div>
+        </main>
+        </div>
+
+        <!-- Script Bootstrap -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- JS Scripts -->
+        <script src="../js/auth.js"></script>
+        <script src="../js/ajustes.js"></script>
+    </body>
+    </html>
