@@ -28,6 +28,11 @@ if (botonSalir) { //If de seguridad por si el boton no existe en alguna pagina
         evento.preventDefault();
         sessionStorage.removeItem('tokenVIP');
         sessionStorage.removeItem('usuarioLogeado');
-        window.location.replace('login.html');
+
+        if(window.location.pathname.includes('/paginas/')) {
+            window.location.replace('../login.html')
+        } else {
+            window.location.replace('login.html');
+        }
     });
 }

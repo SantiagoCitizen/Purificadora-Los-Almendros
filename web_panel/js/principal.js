@@ -158,11 +158,26 @@ async function guardarNuevaTarifa(idUsuario) {
     }
     
 }
-//FIN MODULO PRINCIPAL: (VISTA PRINCIPAL)
+
+// Función: Cargar el precio base desde Ajustes
+async function cargarPrecioBase() {
+    try {
+        const respuesta = await fetch('http://127.0.0.1:8000/ajustes/');
+        if (respuesta.ok) {
+            const datos = await respuesta.json();
+            const precio = datos.precio_garrafon !== undefined ? datos.precio_garrafon : datos[0];
+            
+            document.getElementById('precioBaseDashboard').innerText = `$${parseFloat(precio).toFixed(2)} MXN`;
+        }
+    } catch (error) {
+        console.error("Error al cargar el precio base:", error);
+        document.getElementById('precioBaseDashboard').innerText = "Error";
+    }
+}
 
 
 
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();
 cargarClientes();
-
+cargarPrecioBase();

@@ -30,7 +30,7 @@ def get_clientes():
                     WHEN 3 THEN 'Residencial'
                     WHEN 4 THEN 'Empresarial'
                 END AS categoria,
-                IFNULL(tarifa_especial, 26.00) AS tarifa
+                IFNULL(tarifa_especial, (SELECT precio_garrafon FROM configuracion WHERE id = 1)) AS tarifa
             FROM usuarios
             WHERE id_rol IN (3, 4);
         """
@@ -65,7 +65,7 @@ def get_detalle_clientes(id_usuario: int):
                 u.id_rol,
                 u.razon_social,
                 u.rfc,
-                IFNULL(u.tarifa_especial, 26.00) AS tarifa_especial,
+                IFNULL(u.tarifa_especial, (SELECT precio_garrafon FROM configuracion WHERE id = 1)) AS tarifa_especial,
                 dc.calle,
                 dc.numero,
                 dc.referencias_domicilio,
