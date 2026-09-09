@@ -11,6 +11,7 @@ from routers import clientes
 from routers import auth
 from routers import finanzas
 from routers import ajustes
+from routers import analitica
 """
 Se inicializa la aplicacion, la variable "app" es el servidor
 title, description y version son leidos por FastAPI para construir automaticamente la documentacion grafica 
@@ -36,7 +37,7 @@ app.include_router(clientes.router)
 app.include_router(auth.router)
 app.include_router(finanzas.router)
 app.include_router(ajustes.router)
-
+app.include_router(analitica.router)
 """
 "@app.get("/")" es un decorador que le dice a la app: Cuando alguien entre a la raiz ("/") ejecuta la funcion de abajo y convierte el resultado en JSON automaticamente
 """
