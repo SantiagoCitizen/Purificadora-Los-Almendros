@@ -1,0 +1,30 @@
+<ion-content class="ion-padding" color="light">
+  
+  <h2 style="color: #444; font-weight: bold; margin-bottom: 20px;">Entregas Pendientes</h2>
+
+  <!-- *ngFor clona esta tarjeta por cada elemento en el arreglo 'entregas' -->
+  <ion-card *ngFor="let entrega of entregas">
+    <ion-card-header>
+      <!-- Usamos las llaves dobles {{ }} para imprimir los datos reales -->
+      <ion-card-title>{{ entrega.cliente }}</ion-card-title>
+      <ion-card-subtitle>{{ entrega.direccion }}</ion-card-subtitle>
+    </ion-card-header>
+    
+    <ion-card-content>
+      <div style="display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">
+        <span><strong>Pedido:</strong> {{ entrega.cantidad_garrafones }} Garrafones</span>
+        <span style="color: #0d6efd;"><strong>Total:</strong> ${{ entrega.total }}</span>
+      </div>
+      
+      <ion-button color="success" expand="block">
+        Marcar como Entregado
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Mensaje por si la ruta está vacía -->
+  <div *ngIf="entregas.length === 0" class="ion-text-center" style="margin-top: 50px; color: #888;">
+    <p>No hay entregas pendientes o cargando datos...</p>
+  </div>
+
+</ion-content>
