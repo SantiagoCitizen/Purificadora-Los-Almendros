@@ -1,10 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http'; 
 
 import { 
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
   IonButton, 
   IonContent, 
   IonCard, 
@@ -23,6 +27,10 @@ import {
   imports: [
     CommonModule, 
     FormsModule, 
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
     IonButton, 
     IonContent, 
     IonCard, 
@@ -33,29 +41,63 @@ import {
     IonBadge
   ]
 })
-export class RutaPage implements OnInit {
+export class RutaPage implements OnInit, OnDestroy {
   pedidos: any[] = [];
+  
+  // Variables para el auto-actualizado y detección de pedidos nuevos
+  private intervaloPolling: any;
+  private idsConocidos: Set<number> = new Set();
+  private primeraCarga: boolean = true;
 
   constructor(
     private http: HttpClient, 
     private router: Router,
-    private cdr: ChangeDetectorRef // <-- Fuerza el repintado de la pantalla
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.cargarRutaDelDia();
+    this.iniciarAutoActualizacion(); // Garantiza que el reloj arranque aunque recargues con F5
   }
 
-  // Se ejecuta cada vez que Ionic entra a esta vista desde el Login
+  // Se activa cada vez que el repartidor entra a la pantalla
   ionViewWillEnter() {
     this.cargarRutaDelDia();
+    this.iniciarAutoActualizacion();
   }
 
-  cargarRutaDelDia() {
+  // Se apaga al ir a Ajustes o Salir para no gastar recursos
+  ionViewWillLeave() {
+    this.detenerAutoActualizacion();
+  }
+
+  ngOnDestroy() {
+    this.detenerAutoActualizacion();
+  }
+
+  iniciarAutoActualizacion() {
+    this.detenerAutoActualizacion();
+    // Consulta silenciosamente cada 10 segundos (10000 ms)
+    this.intervaloPolling = setInterval(() => {
+      this.cargarRutaDelDia(true);
+    }, 10000);
+  }
+
+  detenerAutoActualizacion() {
+    if (this.intervaloPolling) {
+      clearInterval(this.intervaloPolling);
+      this.intervaloPolling = null;
+    }
+  }
+
+  cargarRutaDelDia(esRevisionAutomatica: boolean = false) {
     const token = localStorage.getItem('token');
 
     if (!token) {
-      alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      this.detenerAutoActualizacion();
+      if (!esRevisionAutomatica) {
+        alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      }
       this.router.navigate(['/home']);
       return;
     }
@@ -66,16 +108,68 @@ export class RutaPage implements OnInit {
 
     this.http.get('http://127.0.0.1:8000/repartidores/entregas', { headers }).subscribe({
       next: (datos: any) => {
-        // Asegura que sea un arreglo válido y obligamos a Angular a pintar el HTML
-        this.pedidos = Array.isArray(datos) ? datos : [];
-        console.log('Datos recibidos:', this.pedidos);
+        const listaRecibida = Array.isArray(datos) ? datos : [];
+
+        // Verificar si llegó algún pedido cuyo ID no teníamos registrado
+        const hayPedidoNuevo = listaRecibida.some(
+          (p: any) => !this.idsConocidos.has(p.id_pedido)
+        );
+
+        // Si no es la primera vez que abre la pantalla y hay un ID nuevo, suena la alerta
+        if (!this.primeraCarga && hayPedidoNuevo) {
+          console.log('🔔 ¡Nuevo pedido detectado! Reproduciendo alerta...');
+          this.reproducirSonidoAlerta();
+        }
+
+        // Actualizamos el registro de IDs conocidos
+        this.idsConocidos = new Set(listaRecibida.map((p: any) => p.id_pedido));
+        this.primeraCarga = false;
+
+        this.pedidos = listaRecibida;
+        console.log('🔄 Revisión de pedidos (cada 10s):', this.pedidos);
         this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('Error al cargar la ruta:', err);
-        alert('No se pudo cargar la ruta del día.');
+        if (!esRevisionAutomatica) {
+          alert('No se pudo cargar la ruta del día.');
+        }
       }
     });
+  }
+
+  // Genera un timbre doble tipo "Ding-Dong" sin requerir archivos externos
+  reproducirSonidoAlerta() {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+
+      // Primer tono (Ding)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // Nota Re (D5)
+      gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.3);
+
+      // Segundo tono más agudo (Dong)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.18); // Nota La (A5)
+      gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.18);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + 0.18);
+      osc2.stop(ctx.currentTime + 0.65);
+    } catch (e) {
+      console.warn('El navegador bloqueó el audio automático:', e);
+    }
   }
 
   confirmarEntrega(id_pedido: number) {
@@ -90,11 +184,24 @@ export class RutaPage implements OnInit {
     this.http.put(`http://127.0.0.1:8000/repartidores/entregas/${id_pedido}/entregado`, {}, { headers })
       .subscribe({
         next: () => {
-          this.cargarRutaDelDia();
+          this.cargarRutaDelDia(true);
         },
         error: (error) => {
           console.error('Fallo al confirmar la entrega:', error);
         }
       });
+  }
+
+  irAAjustes() {
+    this.router.navigate(['/ajustes']);
+  }
+
+  cerrarSesion() {
+    this.detenerAutoActualizacion();
+    localStorage.removeItem('token');
+    this.pedidos = [];
+    this.idsConocidos.clear();
+    this.primeraCarga = true;
+    this.router.navigate(['/home']);
   }
 }

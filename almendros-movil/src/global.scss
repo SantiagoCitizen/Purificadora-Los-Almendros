@@ -34,4 +34,28 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/*@import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Busca esta línea en src/global.scss y ponle // al inicio para comentarla: */
+// @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* Agrega estos estilos al final de src/global.scss */
+ion-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(2, 136, 209, 0.12) !important;
+  border: 1px solid #cceeff;
+}
+
+ion-card-title {
+  color: #01579b !important;
+  font-weight: 700;
+}
+
+ion-card-subtitle {
+  color: #0288d1 !important;
+}
+
+ion-button {
+  --border-radius: 10px;
+  font-weight: 600;
+}

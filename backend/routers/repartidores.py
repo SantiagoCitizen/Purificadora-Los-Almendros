@@ -249,7 +249,9 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
             INNER JOIN usuarios u ON p.id_cliente = u.id_usuario
             INNER JOIN direcciones_clientes d ON p.id_direccion = d.id_direccion
             INNER JOIN colonias c ON d.id_colonia = c.id_colonia
-            WHERE p.id_repartidor_asignado = %s AND p.estatus_entrega = 'Pendiente'
+            WHERE p.id_repartidor_asignado = %s 
+            AND p.estatus_entrega = 'Pendiente'
+            AND (p.tipo_pago = 'Efectivo' OR p.pago_confirmado = 1)
         """
         
         cursor.execute(sql_query, (id_repartidor,))

@@ -1,8 +1,22 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Mis Entregas</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="irAAjustes()">
+        Ajustes
+      </ion-button>
+      <ion-button fill="solid" color="danger" (click)="cerrarSesion()">
+        Salir
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
 <ion-content class="ion-padding" color="light">
   
   <h2 style="color: #444; font-weight: bold; margin-bottom: 20px;">Entregas Pendientes</h2>
 
-  <!-- Corrección estructural: Iteración sobre el arreglo 'pedidos' del TypeScript -->
+  <!-- Iteración sobre el arreglo 'pedidos' del TypeScript -->
   <ion-card *ngFor="let pedido of pedidos">
     <ion-card-header>
       <ion-card-title>{{ pedido.cliente }}</ion-card-title>
@@ -12,11 +26,10 @@
     <ion-card-content>
       <div style="display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">
         <span><strong>Pedido:</strong> {{ pedido.cantidad_garrafones }} Garrafones</span>
-        <!-- Se reemplaza 'total' por las propiedades reales del endpoint -->
         <span style="color: #0d6efd;"><strong>Pago:</strong> {{ pedido.tipo_pago }}</span>
       </div>
       
-      <!-- Lógica condicional: Etiqueta visual para indicar al repartidor si debe cobrar o solo entregar -->
+      <!-- Etiqueta visual para indicar al repartidor si debe cobrar o solo entregar -->
       <div style="margin-bottom: 15px;">
          <ion-badge [color]="pedido.pago_confirmado ? 'success' : 'warning'">
             {{ pedido.pago_confirmado ? 'Transferencia Validada' : 'Cobrar al Entregar' }}
@@ -34,7 +47,7 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- Corrección en la validación de estado vacío -->
+  <!-- Validación de estado vacío -->
   <div *ngIf="pedidos.length === 0" class="ion-text-center" style="margin-top: 50px; color: #888;">
     <p>No hay entregas pendientes o cargando datos...</p>
   </div>

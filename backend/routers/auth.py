@@ -21,6 +21,11 @@ class DatosLogin(BaseModel):
     telefono: str
     password: str
 
+#------- Cambiar contraseña
+class DatosCambioPassword(BaseModel):
+    password_actual : str
+    password_nueva : str
+
 #Login
 @router.post("/login")
 def login(datos: DatosLogin):
@@ -99,3 +104,50 @@ def get_usuario_actual(credentials: HTTPAuthorizationCredentials = Depends(secur
         # Esto imprimirá el error exacto en tu terminal negra de FastAPI
         print(f"FALLO DE DECODIFICACIÓN JWT: {e}")
         raise HTTPException(status_code=401, detail="Token inválido o corrupto.")
+
+
+#------- Cambiar contraseña
+@router.put("/cambiar-password")
+def cambiar_password(datos: DatosCambioPassword, usuario_actual: dict = Depends(get_usuario_actual)):
+
+    id_usuario = usuario_actual.get("id_usuario")
+    conexion = db_conexion()
+
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor(dictionary = True)
+
+        #Obtener el hash actual desde la base de datos
+        cursor.execute("SELECT password_hash FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        #Verificar que la contraseña actual ingresada coincida con la DB
+        password_actual_bytes = datos.password_actual.encode('utf-8')
+        hash_db_bytes = usuario['password_hash'].encode('utf-8')
+
+        if not bcrypt.checkpw(password_actual_bytes, hash_db_bytes):
+            raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta")
+
+        #Encriptar la nueva contraseña y actualizar el registro
+        nuevo_hash = bcrypt.hashpw(datos.password_nueva.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        cursor.execute(
+            "UPDATE usuarios SET password_hash = %s WHERE id_usuario = %s",
+            (nuevo_hash, id_usuario)
+        )
+        conexion.commit()
+
+        return {"mensaje": "contraseña actualizada exitosamente"}
+
+    except Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
