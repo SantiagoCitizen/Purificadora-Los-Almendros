@@ -2,28 +2,40 @@
   
   <h2 style="color: #444; font-weight: bold; margin-bottom: 20px;">Entregas Pendientes</h2>
 
-  <!-- *ngFor clona esta tarjeta por cada elemento en el arreglo 'entregas' -->
-  <ion-card *ngFor="let entrega of entregas">
+  <!-- Corrección estructural: Iteración sobre el arreglo 'pedidos' del TypeScript -->
+  <ion-card *ngFor="let pedido of pedidos">
     <ion-card-header>
-      <!-- Usamos las llaves dobles {{ }} para imprimir los datos reales -->
-      <ion-card-title>{{ entrega.cliente }}</ion-card-title>
-      <ion-card-subtitle>{{ entrega.direccion }}</ion-card-subtitle>
+      <ion-card-title>{{ pedido.cliente }}</ion-card-title>
+      <ion-card-subtitle>{{ pedido.direccion }}</ion-card-subtitle>
     </ion-card-header>
     
     <ion-card-content>
       <div style="display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">
-        <span><strong>Pedido:</strong> {{ entrega.cantidad_garrafones }} Garrafones</span>
-        <span style="color: #0d6efd;"><strong>Total:</strong> ${{ entrega.total }}</span>
+        <span><strong>Pedido:</strong> {{ pedido.cantidad_garrafones }} Garrafones</span>
+        <!-- Se reemplaza 'total' por las propiedades reales del endpoint -->
+        <span style="color: #0d6efd;"><strong>Pago:</strong> {{ pedido.tipo_pago }}</span>
       </div>
       
-      <ion-button color="success" expand="block">
+      <!-- Lógica condicional: Etiqueta visual para indicar al repartidor si debe cobrar o solo entregar -->
+      <div style="margin-bottom: 15px;">
+         <ion-badge [color]="pedido.pago_confirmado ? 'success' : 'warning'">
+            {{ pedido.pago_confirmado ? 'Transferencia Validada' : 'Cobrar al Entregar' }}
+         </ion-badge>
+      </div>
+
+      <!-- Notas operativas de campo, renderizadas solo si no son nulas -->
+      <div *ngIf="pedido.notas_campo" style="margin-bottom: 15px; font-style: italic; color: #666;">
+        Nota: {{ pedido.notas_campo }}
+      </div>
+      
+      <ion-button color="success" expand="block" (click)="confirmarEntrega(pedido.id_pedido)">
         Marcar como Entregado
       </ion-button>
     </ion-card-content>
   </ion-card>
 
-  <!-- Mensaje por si la ruta está vacía -->
-  <div *ngIf="entregas.length === 0" class="ion-text-center" style="margin-top: 50px; color: #888;">
+  <!-- Corrección en la validación de estado vacío -->
+  <div *ngIf="pedidos.length === 0" class="ion-text-center" style="margin-top: 50px; color: #888;">
     <p>No hay entregas pendientes o cargando datos...</p>
   </div>
 

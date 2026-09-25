@@ -1,11 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from mysql.connector import Error
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
 import os
 from database import db_conexion
+from dotenv import load_dotenv
+
+# Cargar las variables de entorno en la memoria
+load_dotenv()
 
 router = APIRouter(
     tags=["Autenticacion"]
@@ -71,3 +76,26 @@ def login(datos: DatosLogin):
             cursor.close()
         if conexion and conexion.is_connected():
             conexion.close()
+
+#---------------------Validación de Seguridad-------------------
+security = HTTPBearer()
+
+def get_usuario_actual(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    llave_secreta = os.getenv("JWT_SECRET")
+    
+    try:
+        # Desencriptamos usando la misma llave del login
+        payload = jwt.decode(token, llave_secreta, algorithms=["HS256"])
+        
+        # Extrae los datos en token_vip
+        # Mapeamos 'rol' a 'id_rol' para que coincida con las validaciones
+        return {
+            "id_usuario": payload.get("id_usuario"), 
+            "id_rol": payload.get("rol")
+        }
+        
+    except Exception as e:
+        # Esto imprimirá el error exacto en tu terminal negra de FastAPI
+        print(f"FALLO DE DECODIFICACIÓN JWT: {e}")
+        raise HTTPException(status_code=401, detail="Token inválido o corrupto.")

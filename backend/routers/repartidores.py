@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 import bcrypt
 from database import db_conexion
+from routers.auth import get_usuario_actual
 
 router = APIRouter(
     prefix="/repartidores",
@@ -209,6 +210,100 @@ def baja_repartidor(id_usuario: int, datos: BajaRepartidor):
         conexion.rollback()
         print(f"Error al dar de baja: {e}")
         raise HTTPException(status_code=500, detail="Error interno al procesar la baja del repartidor")
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#----------------Aplicacion Movil--------------------
+#Consultar pedidos de la ruta del dia del repartidor logueado
+@router.get("/entregas")
+def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual)):
+    # Validamos que solo los repartidores (rol 2) puedan ver esto
+    if usuario_actual.get("id_rol") != 2:
+        raise HTTPException(status_code=403, detail="Acceso denegado. Solo para repartidores.")
+    
+    id_repartidor = usuario_actual.get("id_usuario")
+    conexion = db_conexion()
+    
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+        
+    try:
+        # Usamos dictionary=True para que MySQL devuelva JSON en lugar de tuplas
+        cursor = conexion.cursor(dictionary=True)
+        
+        # Sintaxis SQL corregida con los alias exactos (u, d, c, p)
+        sql_query = """
+            SELECT 
+                p.id_pedido,
+                CONCAT(u.nombre, ' ', u.apellido_paterno) AS cliente,
+                CONCAT(d.calle, ' ', d.numero, ', ', c.nombre_colonia) AS direccion,
+                p.cantidad_garrafones,
+                p.tipo_pago,
+                p.pago_confirmado,
+                p.estatus_entrega,
+                p.notas_campo
+            FROM pedidos p
+            INNER JOIN usuarios u ON p.id_cliente = u.id_usuario
+            INNER JOIN direcciones_clientes d ON p.id_direccion = d.id_direccion
+            INNER JOIN colonias c ON d.id_colonia = c.id_colonia
+            WHERE p.id_repartidor_asignado = %s AND p.estatus_entrega = 'Pendiente'
+        """
+        
+        cursor.execute(sql_query, (id_repartidor,))
+        pedidos = cursor.fetchall()
+        
+        # FastAPI convertirá automáticamente esta lista de diccionarios a formato JSON
+        return pedidos
+        
+    except Exception as e:
+        print(f"Error en la base de datos: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al procesar las entregas")
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#Marcar como entregado
+@router.put("/entregas/{id_pedido}/entregado")
+def marcar_pedido_entregado(id_pedido: int, usuario_actual: dict = Depends(get_usuario_actual)):
+    """
+    Actualiza el estatus de un pedido a 'Entregado'.
+    Recibe el id_pedido dinámicamente desde la URL.
+    """
+    if usuario_actual.get("id_rol") != 2:
+        raise HTTPException(status_code=403, detail="Acceso denegado. Solo para repartidores.")
+    
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+        
+    try:
+        cursor = conexion.cursor()
+        
+        # Ejecutamos un UPDATE filtrando por el ID del pedido y validando que pertenezca al repartidor logueado
+        sql_update = """
+            UPDATE pedidos 
+            SET estatus_entrega = 'Entregado' 
+            WHERE id_pedido = %s AND id_repartidor_asignado = %s
+        """
+        
+        cursor.execute(sql_update, (id_pedido, usuario_actual.get("id_usuario")))
+        conexion.commit() # Guardar los cambios permanentemente en MySQL
+        
+        # Si no se modificó ninguna fila, significa que el pedido no existe o no le pertenece a este chofer
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Pedido no encontrado o no asignado a tu ruta.")
+            
+        return {"mensaje": "Entrega confirmada exitosamente"}
+        
+    except Exception as e:
+        conexion.rollback() # Revertir transacción en caso de fallo crítico
+        print(f"Error al actualizar pedido: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al actualizar el pedido")
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()

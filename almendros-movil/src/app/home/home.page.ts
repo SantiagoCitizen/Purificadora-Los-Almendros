@@ -59,9 +59,9 @@ export class HomePage {
     this.http.post('http://127.0.0.1:8000/login', payload, { headers }).subscribe({
       next: (res: any) => {
         // 1. Se guarda el token en la memoria del dispositivo
-        localStorage.setItem('token_repartidor', res.access_token);
+        localStorage.setItem('token', res.token);
         
-        console.log('Sesión guardada:', res);
+        //console.log('Sesión guardada:', res);
         
         // 2. Pantalla de ruta
         this.router.navigate(['/ruta']);
