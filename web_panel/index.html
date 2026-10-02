@@ -15,55 +15,7 @@
 <body class = "d-flex bg-light">
 
     <!-- Barra lateral-->
-    <aside class = "sidebar bg-white border-end d-flex flex-column align-items-center py-3 sticky-top">
-        <!--Logo (cuando lo tenga xd)-->
-
-        <div class = "mb-4 text-center">
-            <i class = "bi bi-droplet-fill text-primary fs-1"></i>
-        </div>
-    <!--Navegacion-->
-        <ul class = "nav nav-pills flex-column w-100 px-2 text-center">
-            <li class = "nav-item mb-2">
-                <a href="#" class = "nav-link text-dark active bg-light text-primary fw-bold" aria-current="page">
-                    <i class="bi bi-border-all fs-3 d-block mb-1 text-dark"></i>
-                    <small style = "font-size: 0.75 rem;">Principal</small>
-                </a>
-            </li>
-        <li class = "nav-item mb-2">
-            <a href="paginas/finanzas.html" class="nav-link text-muted">
-                <i class ="bi bi-cash fs-3 d-block mb-1"></i>
-                <small style="font-size: 0.75rem;">Finanzas</small>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a href="paginas/logistica.html" class="nav-link text-muted">
-                <i class = "bi bi-bus-front fs-3 d-block mb-1"></i>
-                <small style="font-size: 0.75rem;">Logistica</small>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a href="paginas/analitica.html" class="nav-link text-muted">
-                <i class="bi bi-clipboard2-data-fill fs-3 d-block mb-1"></i>
-                <small style="font-size: 0.75rem;">Analitica</small>
-            </a>
-
-        </li>
-        <li class="nav-item mb-2">
-            <a href="paginas/ajustes.html" class="nav-link text-muted">
-                <i class="bi bi-gear-fill fs-3 d-block mb-1"></i>
-                <small style="font-size: 0.75rem;">Ajustes</small>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a id="btnSalir" href="#" class="nav-link text-muted">
-                <i class="bi bi-arrow-bar-left fs-3 d-block mb-1"></i>
-                <small style="font-size: 0.75rem;">Salir</small>
-            </a>
-
-        </li>
-        </ul>
-    </aside>
-
+    <div id="contenedor-sidebar" class="sticky-top vh-100 bg-white border-end" style="z-index: 1020; min-width: 85px;"></div>
     <!--Contenido del lado derecho-->
     <div class="flex-grow-1 d-flex flex-column">
         <!--Contenido superior-->
@@ -198,5 +150,7 @@
     <!-- JS -->
     <script src="js/principal.js"></script>
     <script src="js/auth.js"></script>
+
+    <script src="js/sidebar.js"></script>
 </body>
 </html>

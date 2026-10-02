@@ -50,7 +50,7 @@ def get_transferencias():
                 CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS cliente, 
                 p.monto_total, 
                 p.comprobante_url, 
-                DATE_FORMAT(p.fecha_hora_creacion, '%H:%i hrs') AS hora_solicitud
+                DATE_FORMAT(p.fecha_hora_creacion, '%d/%m/%Y %h:%i %p') AS hora_solicitud
             FROM pedidos p
             JOIN usuarios u ON p.id_cliente = u.id_usuario
             WHERE p.tipo_pago = 'Transferencia' 
