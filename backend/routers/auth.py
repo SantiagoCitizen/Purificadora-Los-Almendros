@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 from mysql.connector import Error
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import bcrypt
@@ -16,7 +17,7 @@ router = APIRouter(
     tags=["Autenticacion"]
 )
 
-#Clase BaseModel
+#Clases BaseModel
 class DatosLogin(BaseModel):
     telefono: str
     password: str
@@ -25,6 +26,22 @@ class DatosLogin(BaseModel):
 class DatosCambioPassword(BaseModel):
     password_actual : str
     password_nueva : str
+
+#-- Registro de nuevo cliente
+class ClienteRegistro(BaseModel):
+    nombre: str
+    apellido_paterno: str
+    apellido_materno: Optional[str] = None
+    telefono: str
+    password: str
+    razon_social: Optional[str] = None
+    rfc: Optional[str] = None
+
+    #Datos de direccion
+    id_colonia: int
+    calle: str
+    numero: str
+    referencias_domicilio: Optional[str] = None
 
 #Login
 @router.post("/login")
@@ -146,6 +163,72 @@ def cambiar_password(datos: DatosCambioPassword, usuario_actual: dict = Depends(
 
     except Error as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+#--- Registro de clientes (App movil)
+@router.post("/registro")
+def registrar_cliente(datos: ClienteRegistro):
+    conexion = db_conexion()
+    if conexion is None:
+        raise HTTPException(status_code=500, detail="Error al conectar con la base de datos")
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # 1. Validar si el teléfono ya existe
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE telefono = %s", (datos.telefono,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Este teléfono ya está registrado")
+
+        # 2. Encriptar contraseña en formato compatible con bcrypt
+        password_bytes = datos.password.encode('utf-8')
+        password_encriptada = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
+
+        # 3. Asignar el rol (3 = Cliente)
+        id_rol_asignado = 3 
+
+        # 4. Insertar en tabla USUARIOS
+        sql_usuario = """
+            INSERT INTO usuarios 
+            (nombre, apellido_paterno, apellido_materno, telefono, password_hash, id_rol, razon_social, rfc) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        valores_usuario = (
+            datos.nombre, datos.apellido_paterno, datos.apellido_materno, 
+            datos.telefono, password_encriptada, id_rol_asignado, 
+            datos.razon_social, datos.rfc
+        )
+        cursor.execute(sql_usuario, valores_usuario)
+        
+        # 5. Capturar el ID que MySQL le dio al nuevo usuario
+        nuevo_id_usuario = cursor.lastrowid
+
+        # 6. Insertar en tabla DIRECCIONES_CLIENTES
+        sql_direccion = """
+            INSERT INTO direcciones_clientes 
+            (id_usuario, id_colonia, calle, numero, referencias_domicilio) 
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        valores_direccion = (
+            nuevo_id_usuario, datos.id_colonia, datos.calle, 
+            datos.numero, datos.referencias_domicilio
+        )
+        cursor.execute(sql_direccion, valores_direccion)
+
+        # 7. Sellar la transacción para que ambas tablas se guarden
+        conexion.commit()
+        
+        return {"mensaje": "Cuenta creada exitosamente"}
+
+    except Error as e:
+        # Si falla la tabla direcciones, deshace la inserción de usuarios
+        conexion.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+        
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()

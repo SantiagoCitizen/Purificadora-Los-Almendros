@@ -37,7 +37,10 @@ export class HomePage {
   password = '';
 
   constructor(private http: HttpClient, private router: Router) {}
-
+  
+  irARegistro() {
+    this.router.navigate(['/registro']);
+  }
   iniciarSesion() {
     if (!this.telefono || !this.password) {
       alert('Ingresa tu teléfono y contraseña');
@@ -61,13 +64,23 @@ export class HomePage {
         // 1. Se guarda el token en la memoria del dispositivo
         localStorage.setItem('token', res.token);
         
-        //console.log('Sesión guardada:', res);
-        
-        // 2. Pantalla de ruta
-        this.router.navigate(['/ruta']);
+        // 2. Leemos el rol que nos mandó la base de datos
+        const rol = res.usuario.id_rol;
+
+        // 3. Redirección basada en el rol
+        if (rol === 2) {
+          // Si es rol 2 (Repartidor), va a su ruta
+          this.router.navigate(['/ruta']);
+        } else if (rol === 3) {
+          // Si es rol 3 (Cliente), va a su nueva pantalla de inicio
+          this.router.navigate(['/inicio-cliente']);
+        } else {
+          // Si por alguna razón entra un administrador u otro rol
+          alert('Tu cuenta no está configurada para usar la aplicación móvil.');
+        }
       },
       error: (err) => {
-        alert(`Error ${err.status}: Revisa la consola para más detalles`);
+        alert(`Error ${err.status}: Teléfono o contraseña incorrectos`);
         console.error('Detalles del error:', err);
       }
     });

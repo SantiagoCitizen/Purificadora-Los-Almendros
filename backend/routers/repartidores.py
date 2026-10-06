@@ -22,6 +22,9 @@ class BajaRepartidor(BaseModel):
 
 class AsignarRutas(BaseModel):
     colonias: List[int]
+
+class ActualizarEstatus(BaseModel):
+    estatus: str
 #---------------------Panel Principal----------------------
 #Ver repartidores (Tambien se ocupa en el panel de logistica)
 @router.get("/")
@@ -250,7 +253,7 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
             INNER JOIN direcciones_clientes d ON p.id_direccion = d.id_direccion
             INNER JOIN colonias c ON d.id_colonia = c.id_colonia
             WHERE p.id_repartidor_asignado = %s 
-            AND p.estatus_entrega = 'Pendiente'
+            AND p.estatus_entrega IN ('Pendiente', 'En camino')
             AND (p.tipo_pago = 'Efectivo' OR p.pago_confirmado = 1)
         """
         
@@ -270,41 +273,54 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
             conexion.close()
 
 #Marcar como entregado
-@router.put("/entregas/{id_pedido}/entregado")
-def marcar_pedido_entregado(id_pedido: int, usuario_actual: dict = Depends(get_usuario_actual)):
+@router.put("/entregas/{id_pedido}/estatus")
+def cambiar_estatus_entrega(id_pedido: int, datos: ActualizarEstatus, usuario_actual: dict = Depends(get_usuario_actual)):
     """
-    Actualiza el estatus de un pedido a 'Entregado'.
-    Recibe el id_pedido dinámicamente desde la URL.
+    Actualiza el estatus de un pedido con validación de candado.
+    Un repartidor no puede poner un pedido 'En camino' si ya tiene otro activo.
     """
     if usuario_actual.get("id_rol") != 2:
         raise HTTPException(status_code=403, detail="Acceso denegado. Solo para repartidores.")
     
+    id_repartidor = usuario_actual.get("id_usuario")
     conexion = db_conexion()
+    
     if conexion is None:
         raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
         
     try:
-        cursor = conexion.cursor()
+        cursor = conexion.cursor(dictionary=True)
         
-        # Ejecutamos un UPDATE filtrando por el ID del pedido y validando que pertenezca al repartidor logueado
+        # Si quiere iniciar un viaje, revisamos que no tenga otro activo
+        if datos.estatus == "En camino":
+            cursor.execute("""
+                SELECT id_pedido FROM pedidos 
+                WHERE id_repartidor_asignado = %s AND estatus_entrega = 'En camino'
+            """, (id_repartidor,))
+            
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Ya tienes un pedido en camino. Entrégalo antes de iniciar otro.")
+
+        # Si pasa el candado (o si el estatus es "Entregado"), hacemos la actualización
         sql_update = """
             UPDATE pedidos 
-            SET estatus_entrega = 'Entregado' 
+            SET estatus_entrega = %s 
             WHERE id_pedido = %s AND id_repartidor_asignado = %s
         """
+        cursor.execute(sql_update, (datos.estatus, id_pedido, id_repartidor))
+        conexion.commit()
         
-        cursor.execute(sql_update, (id_pedido, usuario_actual.get("id_usuario")))
-        conexion.commit() # Guardar los cambios permanentemente en MySQL
-        
-        # Si no se modificó ninguna fila, significa que el pedido no existe o no le pertenece a este chofer
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Pedido no encontrado o no asignado a tu ruta.")
             
-        return {"mensaje": "Entrega confirmada exitosamente"}
+        return {"mensaje": f"Estatus actualizado a {datos.estatus}"}
         
     except Exception as e:
-        conexion.rollback() # Revertir transacción en caso de fallo crítico
+        conexion.rollback()
         print(f"Error al actualizar pedido: {e}")
+        # Manejamos errores 400 y 404 para que no se sobreescriban con un 500
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail="Error interno al actualizar el pedido")
     finally:
         if 'cursor' in locals() and cursor:

@@ -1,0 +1,50 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Agua Los Almendros</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="solid" color="danger" (click)="cerrarSesion()">
+        Salir
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding" color="light">
+  
+  <div class="ion-text-center ion-margin-bottom">
+    <h2 style="font-weight: bold; color: #333;">¡Bienvenido(a)!</h2>
+    <p style="color: #666;">¿Qué necesitas hoy?</p>
+  </div>
+
+  <!-- BOTÓN PRINCIPAL PARA NUEVO PEDIDO -->
+  <ion-button expand="block" color="tertiary" size="large" class="ion-margin-bottom" (click)="nuevoPedido()" style="height: 60px; font-weight: bold;">
+    + Pedir Garrafones
+  </ion-button>
+
+  <h3 style="font-weight: bold; color: #444; margin-top: 30px; margin-bottom: 15px;">Mis Pedidos Activos</h3>
+
+  <!-- LISTA DE PEDIDOS DEL CLIENTE -->
+  <ion-card *ngFor="let pedido of misPedidos">
+    <ion-card-header>
+      <ion-card-subtitle>{{ pedido.fecha_hora_creacion | date:'short' }}</ion-card-subtitle>
+      <ion-card-title>{{ pedido.cantidad_garrafones }} Garrafones</ion-card-title>
+    </ion-card-header>
+    
+    <ion-card-content>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 16px; font-weight: bold;">Total: ${{ pedido.monto_total }}</span>
+        
+        <!-- El color del badge cambia mágicamente según el estatus -->
+        <ion-badge [color]="getColorEstatus(pedido.estatus_entrega)">
+          {{ pedido.estatus_entrega }}
+        </ion-badge>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- MENSAJE SI NO HAY PEDIDOS -->
+  <div *ngIf="misPedidos.length === 0" class="ion-text-center" style="margin-top: 40px; color: #888;">
+    <p>No tienes pedidos en curso en este momento.</p>
+  </div>
+
+</ion-content>

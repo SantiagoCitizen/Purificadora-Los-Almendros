@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from database import db_conexion
+from routers.auth import get_usuario_actual
 from mysql.connector import Error
 
 router = APIRouter(
@@ -121,3 +122,31 @@ def actualizar_tarifa_cliente(id_usuario: int, datos: ActualizarTarifa):
             cursor.close()
         if conexion and conexion.is_connected():
             conexion.close()
+
+#-- Aplicacacion movil
+#Pedidos de clientes
+@router.get("/mis-pedidos")
+def obtener_mis_pedidos(usuario_actual: dict = Depends(get_usuario_actual)):
+    # Validar que sea cliente (rol 3)
+    if usuario_actual.get("id_rol") != 3:
+        raise HTTPException(status_code=403, detail="Acceso solo para clientes")
+        
+    conexion = db_conexion()
+    if not conexion:
+        raise HTTPException(status_code=500, detail="Error de conexión")
+        
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        # Traer pedidos del cliente ordenados por los más recientes
+        cursor.execute("""
+            SELECT id_pedido, cantidad_garrafones, monto_total, estatus_entrega, fecha_hora_creacion
+            FROM pedidos 
+            WHERE id_cliente = %s 
+            ORDER BY fecha_hora_creacion DESC
+            LIMIT 10
+        """, (usuario_actual.get("id_usuario"),))
+        
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conexion.close()

@@ -18,4 +18,12 @@ export const routes: Routes = [
     path: 'ajustes',
     loadComponent: () => import('./ajustes/ajustes.page').then( m => m.AjustesPage)
   },
+  {
+    path: 'registro',
+    loadComponent: () => import('./registro/registro.page').then( m => m.RegistroPage)
+  },
+  {
+    path: 'inicio-cliente',
+    loadComponent: () => import('./inicio-cliente/inicio-cliente.page').then( m => m.InicioClientePage)
+  },
 ];

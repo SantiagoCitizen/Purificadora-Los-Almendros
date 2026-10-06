@@ -41,9 +41,24 @@
         Nota: {{ pedido.notas_campo }}
       </div>
       
-      <ion-button color="success" expand="block" (click)="confirmarEntrega(pedido.id_pedido)">
+      <!-- Botón 1: Solo aparece si está Pendiente -->
+      <ion-button 
+        *ngIf="pedido.estatus_entrega === 'Pendiente'" 
+        color="warning" 
+        expand="block" 
+        (click)="actualizarEstatus(pedido.id_pedido, 'En camino')">
+        Iniciar Entrega
+      </ion-button>
+
+      <!-- Botón 2: Solo aparece si ya está En camino -->
+      <ion-button 
+        *ngIf="pedido.estatus_entrega === 'En camino'" 
+        color="success" 
+        expand="block" 
+        (click)="actualizarEstatus(pedido.id_pedido, 'Entregado')">
         Marcar como Entregado
       </ion-button>
+
     </ion-card-content>
   </ion-card>
 

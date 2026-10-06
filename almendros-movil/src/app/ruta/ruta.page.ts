@@ -172,22 +172,32 @@ export class RutaPage implements OnInit, OnDestroy {
     }
   }
 
-  confirmarEntrega(id_pedido: number) {
+  actualizarEstatus(id_pedido: number, nuevoEstatus: string) {
     const token = localStorage.getItem('token');
     
     if (!token) return;
 
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     });
 
-    this.http.put(`http://127.0.0.1:8000/repartidores/entregas/${id_pedido}/entregado`, {}, { headers })
+    const body = { estatus: nuevoEstatus };
+
+    this.http.put(`http://127.0.0.1:8000/repartidores/entregas/${id_pedido}/estatus`, body, { headers })
       .subscribe({
         next: () => {
+          // Recargamos la lista para actualizar los botones en la interfaz
           this.cargarRutaDelDia(true);
         },
         error: (error) => {
-          console.error('Fallo al confirmar la entrega:', error);
+          // Si FastAPI devuelve un error 400 (el candado se activó), lo mostramos en un alert
+          if (error.status === 400 && error.error && error.error.detail) {
+            alert(error.error.detail);
+          } else {
+            console.error('Fallo al actualizar el estatus:', error);
+            alert('Ocurrió un error al actualizar el pedido.');
+          }
         }
       });
   }
