@@ -57,11 +57,11 @@ export class InicioClientePage implements OnInit {
   }
 
   nuevoPedido() {
-    // Por ahora solo es un aviso, luego crearemos la pantalla de checkout
+    // Por ahora solo es un aviso pq luego se programa
     alert('Próximamente: Pantalla para elegir cantidad y método de pago.');
   }
 
-  // Da estilo visual al estatus
+  // Colores del estatus
   getColorEstatus(estatus: string): string {
     switch (estatus) {
       case 'Pendiente': return 'warning';
