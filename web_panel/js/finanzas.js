@@ -1,5 +1,7 @@
-//constante con la url del local host que ya luego cambio metiendolo a env cuando tenga el servidor en la nube aprendi a pensar kalajo
-const url_finanzas = 'http://127.0.0.1:8000/finanzas';
+import { environment } from './config.js';
+
+//constante con la url leyendo desde nuestro config para cuando subamos a la nube
+const url_finanzas = `${environment.apiUrl}/finanzas`;
 
 document.addEventListener('DOMContentLoaded', () => {
     //Cuando cargue la pagina, se ejecutan las 4 peticiones
@@ -146,7 +148,7 @@ async function cargarIncidencias() {
 }
 
 //Aprobar transferencia
-async function aprobarTransferencia(idPedido) {
+window.aprobarTransferencia = async function(idPedido) {
     if (!confirm(`¿Estás seguro de APROBAR la transferencia del pedido #${idPedido}?`)) return;
     try {
         const respuesta = await fetch(`${url_finanzas}/transferencias/${idPedido}/aprobar`, { method: 'PUT' });
@@ -159,7 +161,7 @@ async function aprobarTransferencia(idPedido) {
 }
 
 //Rechazar transferencia
-async function rechazarTransferencia(idPedido) {
+window.rechazarTransferencia = async function(idPedido) {
     if (!confirm(`¿Estás seguro de RECHAZAR el pago del pedido #${idPedido}?`)) return;
     try {
         const respuesta = await fetch(`${url_finanzas}/transferencias/${idPedido}/rechazar`, { method: 'PUT' });
@@ -172,7 +174,7 @@ async function rechazarTransferencia(idPedido) {
 }
 
 //Mostrar el comprobante de pago
-function verComprobante(url) {
+window.verComprobante = function(url) {
     //url de la imagen
     document.getElementById('imgComprobante').src = url;
     //Boostrap lo abriara en una ventana
@@ -181,7 +183,7 @@ function verComprobante(url) {
 }
 
 //Resumen de por repartidor
-async function verDetalleRepartidor(id_repartidor) {
+window.verDetalleRepartidor = async function(id_repartidor) {
     const tabla = document.getElementById('tablaDetalleRepartidor');
     tabla.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Cargando detalles...</td></tr>';
 
@@ -227,7 +229,7 @@ async function verDetalleRepartidor(id_repartidor) {
 }
 
 //Boton: Exportar a Excel Ventas Por Repartidor y Transferencias
-function exportarExcel(idTabla, nombreArchivo) {
+window.exportarExcel = function(idTabla, nombreArchivo) {
     //Tabla del html
     const tabla = document.getElementById(idTabla);
     //SheetJS
@@ -240,7 +242,7 @@ function exportarExcel(idTabla, nombreArchivo) {
 }
 
 //Boton: Exportar a PDF Ventas por Repartidor y Transferencias
-function exportarPDF(idTabla, tituloReporte) {
+window.exportarPDF = function(idTabla, tituloReporte) {
     //Se inicializa el creador de PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();

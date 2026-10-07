@@ -1,4 +1,6 @@
-const url_analitica = 'http://127.0.0.1:8000/analitica';
+import { environment } from './config.js';
+
+const url_analitica = `${environment.apiUrl}/analitica`;
 let graficaVentas;
 
 document.addEventListener('DOMContentLoaded', () => {

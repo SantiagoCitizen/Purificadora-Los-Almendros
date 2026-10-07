@@ -1,3 +1,5 @@
+import { environment } from './config.js';
+
 //MODULO PRINCIPAL (VENTANA PRINCIPAL)
 
 // Función: Cargar Repartidores
@@ -5,7 +7,7 @@ async function cargarRepartidores() {
     const select = document.getElementById('tablaRepartidores');
     if (!select) return;
     try {
-        const respuesta = await fetch('http://127.0.0.1:8000/repartidores');
+        const respuesta = await fetch(`${environment.apiUrl}/repartidores`);
         const repartidores = await respuesta.json();
 
         //buscar la tabla en el html por su id
@@ -47,7 +49,7 @@ async function cargarClientes() {
 
     try {
         //Se piden los clientes
-        const respuesta = await fetch('http://127.0.0.1:8000/clientes');
+        const respuesta = await fetch(`${environment.apiUrl}/clientes`);
         const clientes = await respuesta.json();
 
         const tabla = document.getElementById('tablaClientes');
@@ -78,10 +80,9 @@ async function cargarClientes() {
     }
 }
 
-
 //Funcion para abrir el boton "Ver" en dashboard principal de cliente
-
-async function abrirBtnVerCliente(idUsuario) {
+//Se expone a window para que funcione con el onclick del HTML al usar type="module"
+window.abrirBtnVerCliente = async function(idUsuario) {
     try{
         //Instanciar el modal de bootstrap para controlarlo
         const modal = new bootstrap.Modal(document.getElementById('btnVerCliente'));
@@ -93,7 +94,7 @@ async function abrirBtnVerCliente(idUsuario) {
         document.getElementById('direccionCliente').innerText = '...';
         document.getElementById('inputTarifa').value = "";
         //Pedir a FastAPI el JSON del cliente
-        const respuesta = await fetch(`http://127.0.0.1:8000/clientes/${idUsuario}`);
+        const respuesta = await fetch(`${environment.apiUrl}/clientes/${idUsuario}`);
         const datosCliente = await respuesta.json();
 
         //armar el nombre (si es empresa, se agrega la razon social)
@@ -119,18 +120,20 @@ async function abrirBtnVerCliente(idUsuario) {
         document.getElementById('nombreCliente').innerText = "Error al cargar datos";
     }
 }
+
 //Funcion para guardar la nueva tarifa
-async function guardarNuevaTarifa(idUsuario) {
+//Se expone a window para que funcione con el onclick del HTML al usar type="module"
+window.guardarNuevaTarifa = async function(idUsuario) {
     //Obtener el valor de la nueva tarifa
     const nuevaTarifa = document.getElementById('inputTarifa').value;
     //Cambiar el texto del boton para que parezca que esta pensando o procesando
     const btnGuardar = document.getElementById('btnGuardarTarifa');
     btnGuardar.innerText = 'Guardando...';
-    btnGuardar.disable = true;
+    btnGuardar.disabled = true; // Corregido el typo "disable" a "disabled"
 
     try {
         //Enviar el valor al backend
-        const respuesta = await fetch(`http://127.0.0.1:8000/clientes/${idUsuario}/tarifa`, {
+        const respuesta = await fetch(`${environment.apiUrl}/clientes/${idUsuario}/tarifa`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -162,7 +165,7 @@ async function guardarNuevaTarifa(idUsuario) {
 // Función: Cargar el precio base desde Ajustes
 async function cargarPrecioBase() {
     try {
-        const respuesta = await fetch('http://127.0.0.1:8000/ajustes/');
+        const respuesta = await fetch(`${environment.apiUrl}/ajustes/`);
         if (respuesta.ok) {
             const datos = await respuesta.json();
             const precio = datos.precio_garrafon !== undefined ? datos.precio_garrafon : datos[0];
@@ -174,8 +177,6 @@ async function cargarPrecioBase() {
         document.getElementById('precioBaseDashboard').innerText = "Error";
     }
 }
-
-
 
 // Ejecutar las funciones al mismo tiempo
 cargarRepartidores();

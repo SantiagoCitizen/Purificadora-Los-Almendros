@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', () =>{
+import { environment } from './config.js';
+
+document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const inputTelefono = document.getElementById('inputTelefono');
     const inputPassword = document.getElementById('inputPassword');
@@ -9,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () =>{
     const mensajeError = document.getElementById('mensajeError');
 
     //Envio de formulario
-    loginForm.addEventListener('submit', async (evento) =>{
+    loginForm.addEventListener('submit', async (evento) => {
         //Prevenir que la pagina se recargue por defecto
         evento.preventDefault();
 
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () =>{
         const telefonoValido = regexTelefono.test(inputTelefono.value.trim());
 
         //Verificar que la constraseña no quede vacia
-        const passwordValido = inputPassword.value.trim().length >0;
+        const passwordValido = inputPassword.value.trim().length > 0;
 
         //Errores por si no cumple las validaciones
         if(!telefonoValido || !passwordValido) {
@@ -36,9 +38,9 @@ document.addEventListener('DOMContentLoaded', () =>{
         //Si todo ta bien, preparemos la peticiones al servidor
         cambiarEstadoBoton(true);
 
-        try{
-            //Se hace la peticion a fastapi
-            const respuesta = await fetch('http://127.0.0.1:8000/login', {
+        try {
+            //Se hace la peticion a fastapi usando la variable de entorno
+            const respuesta = await fetch(`${environment.apiUrl}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -65,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () =>{
             sessionStorage.setItem('tokenVIP', datos.token);
             //redirigir al panel principal
             window.location.href="index.html"
-        } catch (error){
+        } catch (error) {
             //Mostrar el error si el backend falla o la red esta caida
             mostrarError(error.message === "Failed to fetch"
                 ? "No se pudo conectar con el servidor. Verifica que la API este corriendo"
@@ -101,4 +103,4 @@ document.addEventListener('DOMContentLoaded', () =>{
     function ocultarError() {
         alertaError.classList.add('d-none');
     }
-})
+});

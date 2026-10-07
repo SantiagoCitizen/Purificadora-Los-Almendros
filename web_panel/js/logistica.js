@@ -1,12 +1,13 @@
-// VER COLONIAS REGISTRADAS
+import { environment } from './config.js';
 
+// VER COLONIAS REGISTRADAS
 async function cargarColonias() {
     const tabla = document.getElementById('tablaColonias');
     //Si no encuentra la tabla, detenemos la funcion
     if (!tabla) return;
 
     try {
-        const respuesta = await fetch('http://localhost:8000/colonias');
+        const respuesta = await fetch(`${environment.apiUrl}/colonias`);
         if (!respuesta) {
             throw new Error('Error en la respuesta del servidor');
         }
@@ -45,7 +46,7 @@ async function cargarColonias() {
                 if (confirmacion) {
                     try {
                         //Peticion a FastAPI que borre
-                        const respuestaDelete = await fetch(`http://localhost:8000/colonias/${colonia.id_colonia}`, {
+                        const respuestaDelete = await fetch(`${environment.apiUrl}/colonias/${colonia.id_colonia}`, {
                             method: 'DELETE'
                         });
                         if (respuestaDelete.ok) {
@@ -83,7 +84,7 @@ async function cargarColonias() {
                 }
                 try {
                     //peticion put a fastapi
-                    const respuestaPUT = await fetch(`http://localhost:8000/colonias/${colonia.id_colonia}`, {
+                    const respuestaPUT = await fetch(`${environment.apiUrl}/colonias/${colonia.id_colonia}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -114,11 +115,9 @@ async function cargarColonias() {
                 </td>
             </tr>`;
     }
-    
 }
 
 //REGISTRAR COLONIA
-
 document.addEventListener('DOMContentLoaded', () => {
 
     cargarColonias();
@@ -136,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             try {
                 //Peticion POST a FastAPI
-                const respuesta = await fetch('http://localhost:8000/colonias', {
+                const respuesta = await fetch(`${environment.apiUrl}/colonias`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -177,7 +176,7 @@ async function cargarRepartidoresLogistica() {
     if (!tabla) return; 
 
     try {
-        const respuesta = await fetch('http://localhost:8000/repartidores');
+        const respuesta = await fetch(`${environment.apiUrl}/repartidores`);
         const repartidores = await respuesta.json();
 
         tabla.innerHTML = ''; // Limpiar el mensaje de "Cargando..."
@@ -220,7 +219,6 @@ async function cargarRepartidoresLogistica() {
 }
 
 //Modulo: Alta de repartidores
-
 const btnGuardarRepartidor = document.getElementById('btnGuardarRepartidor');
 
 if(btnGuardarRepartidor) {
@@ -245,7 +243,7 @@ if(btnGuardarRepartidor) {
     };
     try {
         //Peticion post a FastAPI
-        const respuesta = await fetch('http://localhost:8000/repartidores', {
+        const respuesta = await fetch(`${environment.apiUrl}/repartidores`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -278,7 +276,6 @@ if(btnGuardarRepartidor) {
     });
 }
 
-//Modulo: baja de repartidores
 // ==========================================
 // MÓDULO: BAJA DE REPARTIDORES
 // ==========================================
@@ -299,7 +296,7 @@ if (modalBajaRepartidor) {
             selectReemplazo.disabled = true;
 
             try {
-                const respuesta = await fetch('http://localhost:8000/repartidores');
+                const respuesta = await fetch(`${environment.apiUrl}/repartidores`);
                 const repartidores = await respuesta.json();
                 
                 // Filtrar solo los que siguen trabajando
@@ -379,7 +376,7 @@ if (btnConfirmarBaja) {
                 id_reemplazo: idReemplazo === "" ? null : parseInt(idReemplazo)
             };
 
-            const respuesta = await fetch(`http://localhost:8000/repartidores/${idUsuario}/baja`, {
+            const respuesta = await fetch(`${environment.apiUrl}/repartidores/${idUsuario}/baja`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
@@ -421,7 +418,7 @@ async function cargarSelectRepartidores() {
     select.innerHTML = '<option value="">Cargando...</option>';
 
     try {
-        const respuesta = await fetch('http://localhost:8000/repartidores');
+        const respuesta = await fetch(`${environment.apiUrl}/repartidores`);
         const repartidores = await respuesta.json();
         //Filtrar solo los empleados con contrato activo
         const repartidoresActivos = repartidores.filter(rep => rep.estatus_contrato === 1);
@@ -445,7 +442,7 @@ async function cargarCheckboxesColonias() {
     contenedor.innerHTML = '<div class="text-center text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Cargando colonias...</div>';
     
     try{
-        const respuesta = await fetch('http://localhost:8000/colonias');
+        const respuesta = await fetch(`${environment.apiUrl}/colonias`);
         const colonias = await respuesta.json();
         //limpiar texto de cargando...
         contenedor.innerHTML = '';
@@ -496,7 +493,7 @@ if (btnGuardarRutas) {
 
         try {
             //hacer envio post a la ruta de fastapi
-            const respuesta = await fetch(`http://localhost:8000/repartidores/${idUsuario}/rutas`, {
+            const respuesta = await fetch(`${environment.apiUrl}/repartidores/${idUsuario}/rutas`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

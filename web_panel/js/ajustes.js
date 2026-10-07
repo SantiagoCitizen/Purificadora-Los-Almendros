@@ -1,10 +1,10 @@
-const url = 'http://127.0.0.1:8000/ajustes'
+import { environment } from './config.js';
+
+const url = `${environment.apiUrl}/ajustes`;
 
 document.addEventListener('DOMContentLoaded', () => {
     //Cargar el precio y el nuero de telefono nada mas entrar a la pagina
     cargarConfiguracion();
-
-
 });
 
 //Obtener la configuracion actual y llenado del formulario
@@ -102,4 +102,4 @@ document.getElementById('formSeguridad').addEventListener('submit', async (e) =>
     } catch (error) {
         alert("Fallo en la conexion con el servidor");
     }
-})
+});
