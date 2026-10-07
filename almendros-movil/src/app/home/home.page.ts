@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment'; 
 
-// Importar las piezas a usar
 import { 
   IonContent, 
   IonCard, 
@@ -41,6 +41,7 @@ export class HomePage {
   irARegistro() {
     this.router.navigate(['/registro']);
   }
+  
   iniciarSesion() {
     if (!this.telefono || !this.password) {
       alert('Ingresa tu teléfono y contraseña');
@@ -58,16 +59,16 @@ export class HomePage {
       'Content-Type': 'application/json'
     });
 
-    // Petición a la ruta exacta
-    this.http.post('http://127.0.0.1:8000/login', payload, { headers }).subscribe({
+    // 
+    this.http.post(`${environment.apiUrl}/login`, payload, { headers }).subscribe({
       next: (res: any) => {
-        // 1. Se guarda el token en la memoria del dispositivo
+        // Se guarda el token en la memoria del dispositivo
         localStorage.setItem('token', res.token);
         
-        // 2. Leemos el rol que nos mandó la base de datos
+        // Lee el rol que mandó la base de datos
         const rol = res.usuario.id_rol;
 
-        // 3. Redirección basada en el rol
+        // Redirección basada en el rol
         if (rol === 2) {
           // Si es rol 2 (Repartidor), va a su ruta
           this.router.navigate(['/ruta']);

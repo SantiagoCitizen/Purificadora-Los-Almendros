@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment'; 
 
 import {
   IonHeader,
@@ -87,7 +88,8 @@ export class AjustesPage {
       password_nueva: this.passwordNueva
     };
 
-    this.http.put('http://127.0.0.1:8000/cambiar-password', payload, { headers })
+    
+    this.http.put(`${environment.apiUrl}/cambiar-password`, payload, { headers })
       .subscribe({
         next: () => {
           alert('Contraseña actualizada exitosamente. Por seguridad, inicia sesión con tu nueva clave.');

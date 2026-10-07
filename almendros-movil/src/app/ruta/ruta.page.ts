@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http'; 
+import { environment } from '../../environments/environment'; 
 
 import { 
   IonHeader,
@@ -106,11 +107,11 @@ export class RutaPage implements OnInit, OnDestroy {
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get('http://127.0.0.1:8000/repartidores/entregas', { headers }).subscribe({
+    this.http.get(`${environment.apiUrl}/repartidores/entregas`, { headers }).subscribe({
       next: (datos: any) => {
         const listaRecibida = Array.isArray(datos) ? datos : [];
 
-        // Verificar si llegó algún pedido cuyo ID no teníamos registrado
+        // Verificar si llegó algún pedido cuyo ID no tenía registrado
         const hayPedidoNuevo = listaRecibida.some(
           (p: any) => !this.idsConocidos.has(p.id_pedido)
         );
@@ -121,7 +122,7 @@ export class RutaPage implements OnInit, OnDestroy {
           this.reproducirSonidoAlerta();
         }
 
-        // Actualizamos el registro de IDs conocidos
+        // Actualiza el registro de IDs conocidos
         this.idsConocidos = new Set(listaRecibida.map((p: any) => p.id_pedido));
         this.primeraCarga = false;
 
@@ -184,10 +185,10 @@ export class RutaPage implements OnInit, OnDestroy {
 
     const body = { estatus: nuevoEstatus };
 
-    this.http.put(`http://127.0.0.1:8000/repartidores/entregas/${id_pedido}/estatus`, body, { headers })
+    this.http.put(`${environment.apiUrl}/repartidores/entregas/${id_pedido}/estatus`, body, { headers })
       .subscribe({
         next: () => {
-          // Recargamos la lista para actualizar los botones en la interfaz
+          // Recargam la lista para actualizar los botones en la interfaz
           this.cargarRutaDelDia(true);
         },
         error: (error) => {

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment'; // <-- 1. Importamos el entorno
+
 import { 
   IonHeader, 
   IonToolbar, 
@@ -51,7 +53,6 @@ export class RegistroPage implements OnInit {
   // Lista que se llenará desde el backend
   colonias: any[] = [];
 
-  // El objeto JSON que hará match con tu Pydantic BaseModel en FastAPI
   cliente = {
     nombre: '',
     apellido_paterno: '',
@@ -71,8 +72,8 @@ export class RegistroPage implements OnInit {
   }
 
   cargarColonias() {
-    // AJUSTA ESTA URL si tu router de colonias tiene otro prefijo
-    this.http.get('http://127.0.0.1:8000/colonias').subscribe({
+
+    this.http.get(`${environment.apiUrl}/colonias`).subscribe({
       next: (datos: any) => {
         this.colonias = datos;
       },
@@ -84,20 +85,19 @@ export class RegistroPage implements OnInit {
   }
 
   registrarCliente() {
-    // 1. Validación básica para que no envíen datos vacíos y FastAPI no se queje
+    // Validación básica para que no envíen datos vacíos 
     if (!this.cliente.nombre || !this.cliente.apellido_paterno || !this.cliente.telefono || 
         !this.cliente.password || !this.cliente.id_colonia || !this.cliente.calle || !this.cliente.numero) {
       alert('Por favor, llena todos los campos obligatorios.');
       return;
     }
 
-    // 2. Preparamos la petición
+    //  Prepara la petición
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    // 3. Enviamos los datos al backend 
-    this.http.post('http://127.0.0.1:8000/registro', this.cliente, { headers })
+    this.http.post(`${environment.apiUrl}/registro`, this.cliente, { headers })
       .subscribe({
         next: (respuesta: any) => {
           // Si el backend dice que todo OK (Status 200)

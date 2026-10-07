@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment'; 
+
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
   IonContent, IonCard, IonCardHeader, IonCardTitle, 
@@ -45,8 +47,7 @@ export class InicioClientePage implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    // Petición al backend para traer solo los pedidos de este cliente
-    this.http.get('http://127.0.0.1:8000/clientes/mis-pedidos', { headers }).subscribe({
+    this.http.get(`${environment.apiUrl}/clientes/mis-pedidos`, { headers }).subscribe({
       next: (datos: any) => {
         this.misPedidos = datos;
       },
