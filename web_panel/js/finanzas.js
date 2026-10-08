@@ -1,6 +1,5 @@
 import { environment } from './config.js';
 
-//constante con la url leyendo desde nuestro config para cuando subamos a la nube
 const url_finanzas = `${environment.apiUrl}/finanzas`;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -185,11 +184,10 @@ window.verComprobante = function(url) {
 //Resumen de por repartidor
 window.verDetalleRepartidor = async function(id_repartidor) {
     const tabla = document.getElementById('tablaDetalleRepartidor');
-    tabla.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Cargando detalles...</td></tr>';
+    tabla.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div> Cargando detalles...</td></tr>';
 
-    //Se abre el modal mientras carga
-    const modal = new bootstrap.Modal(document.getElementById('modalDetalleRepartidor'));
-    modal.show()
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetalleRepartidor'));
+    modal.show();
     
     try {
         const respuesta = await fetch (`${url_finanzas}/conciliacion/${id_repartidor}`);
@@ -197,7 +195,7 @@ window.verDetalleRepartidor = async function(id_repartidor) {
 
         tabla.innerHTML = '';
         if (detalles.length === 0) {
-            tabla.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay pedidos registrados para este repartidor hoy.</td></tr>';
+            tabla.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay pedidos registrados para este repartidor hoy.</td></tr>';
             return;
         }
         detalles.forEach(d => {
@@ -213,18 +211,22 @@ window.verDetalleRepartidor = async function(id_repartidor) {
                 ? `<span class="badge bg-success">Entregado</span>` 
                 : `<span class="badge bg-danger">${d.estatus_entrega}</span>`;
             
+            // Evaluamos si el repartidor dejó una nota, si no, ponemos un guión
+            let notaCampo = d.notas_campo ? d.notas_campo : '<span class="text-muted fst-italic">-</span>';
+            
             tabla.innerHTML += `
                 <tr>
                     <td class="fw-bold">#${d.id_pedido}</td>
                     <td>${d.cliente}</td>
-                    <td class="fw-bold">${monto}</td>
+                    <td class="fw-bold text-primary">${monto}</td>
                     <td>${badgePago}</td>
                     <td>${badgeEstatus}</td>
+                    <td class="small text-start text-muted">${notaCampo}</td> <!-- <-- Nueva celda de nota -->
                 </tr>
             `;
         });
     } catch (error) {
-        tabla.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar el detalle.</td></tr>';
+        tabla.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error al cargar el detalle.</td></tr>';
     }
 }
 

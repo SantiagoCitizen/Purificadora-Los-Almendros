@@ -5,20 +5,16 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http'; 
 import { environment } from '../../environments/environment'; 
 
+
 import { 
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonButton, 
-  IonContent, 
-  IonCard, 
-  IonCardHeader, 
-  IonCardTitle, 
-  IonCardSubtitle, 
-  IonCardContent,
-  IonBadge
+  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
+  IonContent, IonCard, IonCardHeader, IonCardTitle, 
+  IonCardSubtitle, IonCardContent, IonBadge, IonIcon
 } from '@ionic/angular';
+
+
+import { addIcons } from 'ionicons';
+import { alertCircleOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-ruta',
@@ -28,18 +24,9 @@ import {
   imports: [
     CommonModule, 
     FormsModule, 
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonButton, 
-    IonContent, 
-    IonCard, 
-    IonCardHeader, 
-    IonCardTitle, 
-    IonCardSubtitle, 
-    IonCardContent,
-    IonBadge
+    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
+    IonContent, IonCard, IonCardHeader, IonCardTitle, 
+    IonCardSubtitle, IonCardContent, IonBadge, IonIcon 
   ]
 })
 export class RutaPage implements OnInit, OnDestroy {
@@ -54,20 +41,20 @@ export class RutaPage implements OnInit, OnDestroy {
     private http: HttpClient, 
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) { 
+    addIcons({ alertCircleOutline });
+  }
 
   ngOnInit() {
     this.cargarRutaDelDia();
-    this.iniciarAutoActualizacion(); // Garantiza que el reloj arranque aunque recargues con F5
+    this.iniciarAutoActualizacion(); 
   }
 
-  // Se activa cada vez que el repartidor entra a la pantalla
   ionViewWillEnter() {
     this.cargarRutaDelDia();
     this.iniciarAutoActualizacion();
   }
 
-  // Se apaga al ir a Ajustes o Salir para no gastar recursos
   ionViewWillLeave() {
     this.detenerAutoActualizacion();
   }
@@ -78,7 +65,6 @@ export class RutaPage implements OnInit, OnDestroy {
 
   iniciarAutoActualizacion() {
     this.detenerAutoActualizacion();
-    // Consulta silenciosamente cada 10 segundos (10000 ms)
     this.intervaloPolling = setInterval(() => {
       this.cargarRutaDelDia(true);
     }, 10000);
@@ -111,23 +97,19 @@ export class RutaPage implements OnInit, OnDestroy {
       next: (datos: any) => {
         const listaRecibida = Array.isArray(datos) ? datos : [];
 
-        // Verificar si llegó algún pedido cuyo ID no tenía registrado
         const hayPedidoNuevo = listaRecibida.some(
           (p: any) => !this.idsConocidos.has(p.id_pedido)
         );
 
-        // Si no es la primera vez que abre la pantalla y hay un ID nuevo, suena la alerta
         if (!this.primeraCarga && hayPedidoNuevo) {
           console.log('🔔 ¡Nuevo pedido detectado! Reproduciendo alerta...');
           this.reproducirSonidoAlerta();
         }
 
-        // Actualiza el registro de IDs conocidos
         this.idsConocidos = new Set(listaRecibida.map((p: any) => p.id_pedido));
         this.primeraCarga = false;
 
         this.pedidos = listaRecibida;
-        console.log('🔄 Revisión de pedidos (cada 10s):', this.pedidos);
         this.cdr.detectChanges(); 
       },
       error: (err) => {
@@ -139,17 +121,15 @@ export class RutaPage implements OnInit, OnDestroy {
     });
   }
 
-  // Genera un timbre doble tipo "Ding-Dong" sin requerir archivos externos
   reproducirSonidoAlerta() {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx();
 
-      // Primer tono (Ding)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // Nota Re (D5)
+      osc1.frequency.setValueAtTime(587.33, ctx.currentTime); 
       gain1.gain.setValueAtTime(0.3, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
       osc1.connect(gain1);
@@ -157,11 +137,10 @@ export class RutaPage implements OnInit, OnDestroy {
       osc1.start(ctx.currentTime);
       osc1.stop(ctx.currentTime + 0.3);
 
-      // Segundo tono más agudo (Dong)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.18); // Nota La (A5)
+      osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.18); 
       gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.18);
       gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.65);
       osc2.connect(gain2);
@@ -175,24 +154,36 @@ export class RutaPage implements OnInit, OnDestroy {
 
   actualizarEstatus(id_pedido: number, nuevoEstatus: string) {
     const token = localStorage.getItem('token');
-    
     if (!token) return;
+
+    let notaRepartidor = null;
+
+    // Si hubo un problema, obligamos al repartidor a justificar por qué
+    if (nuevoEstatus === 'Cancelado' || nuevoEstatus === 'No Entregado') {
+      const razon = prompt('¿Por qué no se pudo completar la entrega? (Ej. Nadie abrió, No tenían dinero)');
+      
+      // Si presiona Cancelar, detenemos la actualización
+      if (razon === null) return; 
+      
+      notaRepartidor = razon.trim();
+    }
 
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
 
-    const body = { estatus: nuevoEstatus };
+    const body = { 
+      estatus: nuevoEstatus,
+      notas_campo: notaRepartidor
+    };
 
     this.http.put(`${environment.apiUrl}/repartidores/entregas/${id_pedido}/estatus`, body, { headers })
       .subscribe({
         next: () => {
-          // Recargam la lista para actualizar los botones en la interfaz
           this.cargarRutaDelDia(true);
         },
         error: (error) => {
-          // Si FastAPI devuelve un error 400 (el candado se activó), lo mostramos en un alert
           if (error.status === 400 && error.error && error.error.detail) {
             alert(error.error.detail);
           } else {

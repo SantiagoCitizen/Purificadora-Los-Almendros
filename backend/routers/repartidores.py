@@ -14,7 +14,7 @@ router = APIRouter(
 class AltaRepartidor(BaseModel):
     nombre: str
     apellido_paterno: str
-    apellido_materno: Optional[str] = None #Puede ser nulo
+    apellido_materno: Optional[str] = None 
     telefono: str
 
 class BajaRepartidor(BaseModel):
@@ -25,6 +25,8 @@ class AsignarRutas(BaseModel):
 
 class ActualizarEstatus(BaseModel):
     estatus: str
+    notas_campo: Optional[str] = None 
+
 #---------------------Panel Principal----------------------
 #Ver repartidores (Tambien se ocupa en el panel de logistica)
 @router.get("/")
@@ -237,7 +239,7 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
         # Usamos dictionary=True para que MySQL devuelva JSON en lugar de tuplas
         cursor = conexion.cursor(dictionary=True)
         
-        # Sintaxis SQL corregida con los alias exactos (u, d, c, p)
+        # Agregamos p.notas_cliente a la consulta
         sql_query = """
             SELECT 
                 p.id_pedido,
@@ -247,6 +249,7 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
                 p.tipo_pago,
                 p.pago_confirmado,
                 p.estatus_entrega,
+                p.notas_cliente,
                 p.notas_campo
             FROM pedidos p
             INNER JOIN usuarios u ON p.id_cliente = u.id_usuario
@@ -272,12 +275,12 @@ def obtener_entregas_asignadas(usuario_actual: dict = Depends(get_usuario_actual
         if conexion and conexion.is_connected():
             conexion.close()
 
-#Marcar como entregado
+#Marcar como entregado o registrar incidencia
 @router.put("/entregas/{id_pedido}/estatus")
 def cambiar_estatus_entrega(id_pedido: int, datos: ActualizarEstatus, usuario_actual: dict = Depends(get_usuario_actual)):
     """
     Actualiza el estatus de un pedido con validación de candado.
-    Un repartidor no puede poner un pedido 'En camino' si ya tiene otro activo.
+    Permite registrar notas_campo si la entrega no se concreta.
     """
     if usuario_actual.get("id_rol") != 2:
         raise HTTPException(status_code=403, detail="Acceso denegado. Solo para repartidores.")
@@ -301,13 +304,13 @@ def cambiar_estatus_entrega(id_pedido: int, datos: ActualizarEstatus, usuario_ac
             if cursor.fetchone():
                 raise HTTPException(status_code=400, detail="Ya tienes un pedido en camino. Entrégalo antes de iniciar otro.")
 
-        # Si pasa el candado (o si el estatus es "Entregado"), hacemos la actualización
+        # Actualizamos el estatus y la nota de campo
         sql_update = """
             UPDATE pedidos 
-            SET estatus_entrega = %s 
+            SET estatus_entrega = %s, notas_campo = %s 
             WHERE id_pedido = %s AND id_repartidor_asignado = %s
         """
-        cursor.execute(sql_update, (datos.estatus, id_pedido, id_repartidor))
+        cursor.execute(sql_update, (datos.estatus, datos.notas_campo, id_pedido, id_repartidor))
         conexion.commit()
         
         if cursor.rowcount == 0:

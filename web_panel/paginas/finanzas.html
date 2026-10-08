@@ -194,8 +194,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body text-center p-4">
-                <!--Imagen-->
-                <img id="imgComprobante" src="" class="img-fuild rounded shadow-sm" alt="Comprobante no disponible" style="max-height: 70vh;">
+                <!--Imagen Corregida-->
+                <img id="imgComprobante" src="" class="img-fluid rounded shadow-sm" alt="Comprobante no disponible" style="max-height: 70vh; width: 100%; object-fit: contain;">
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@
 
         <!--Detalles del repartidor-->
         <div class="modal fade" id="modalDetalleRepartidor" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog-centered">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow">
               <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold"><i class="bi bi-list-check"></i> Detalle de entregas del dia</h5>
@@ -219,6 +219,7 @@
                         <th>Monto</th>
                         <th>Tipo de pago</th>
                         <th>Estatus</th>
+                        <th>Notas</th>
                       </tr>
                     </thead>
                     <tbody id="tablaDetalleRepartidor">

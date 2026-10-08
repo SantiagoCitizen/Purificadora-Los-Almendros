@@ -183,12 +183,13 @@ def get_detalle_repartidor(id_repartidor: int):
         cursor = conexion.cursor(dictionary=True)
         sql_query = """
             SELECT
-            p.id_pedido,
-            CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS cliente,
+                p.id_pedido,
+                CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS cliente,
                 p.monto_total,
                 p.tipo_pago,
                 p.pago_confirmado,
-                p.estatus_entrega
+                p.estatus_entrega,
+                p.notas_campo
             FROM pedidos p
             JOIN usuarios u ON p.id_cliente = u.id_usuario
             WHERE p.id_repartidor_asignado = %s AND DATE(p.fecha_hora_creacion) = CURDATE()

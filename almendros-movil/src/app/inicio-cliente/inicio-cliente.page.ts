@@ -3,13 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/environment'; 
+import { environment } from '../../environments/environment';
 
 import { 
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
-  IonContent, IonCard, IonCardHeader, IonCardTitle, 
-  IonCardSubtitle, IonCardContent, IonBadge 
+  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+  IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
+  IonBadge, IonIcon, 
+  IonSegment, IonSegmentButton, IonLabel 
 } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { cloudUploadOutline, checkmarkCircleOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-inicio-cliente',
@@ -18,15 +21,21 @@ import {
   standalone: true,
   imports: [
     CommonModule, FormsModule,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
-    IonContent, IonCard, IonCardHeader, IonCardTitle, 
-    IonCardSubtitle, IonCardContent, IonBadge
+    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+    IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
+    IonBadge, IonIcon, 
+    IonSegment, IonSegmentButton, IonLabel 
   ]
 })
 export class InicioClientePage implements OnInit {
-  misPedidos: any[] = [];
+  segmentoActual: string = 'activos'; 
+  
+  pedidosActivos: any[] = [];
+  pedidosHistorial: any[] = [];
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private router: Router) {
+    addIcons({ cloudUploadOutline, checkmarkCircleOutline });
+  }
 
   ngOnInit() {
     this.cargarMisPedidos();
@@ -38,36 +47,44 @@ export class InicioClientePage implements OnInit {
 
   cargarMisPedidos() {
     const token = localStorage.getItem('token');
-    if (!token) {
-      this.router.navigate(['/home']);
-      return;
-    }
+    if (!token) return;
 
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     this.http.get(`${environment.apiUrl}/clientes/mis-pedidos`, { headers }).subscribe({
-      next: (datos: any) => {
-        this.misPedidos = datos;
+      next: (res: any) => {
+        
+        // Filtra los pedidos en curso
+        this.pedidosActivos = res.filter((p: any) => 
+          p.estatus_entrega === 'Pendiente' || p.estatus_entrega === 'En camino'
+        );
+        
+        // Filtram los pedidos que ya finalizaron 
+        this.pedidosHistorial = res.filter((p: any) => 
+          ['Entregado', 'Cancelado', 'No Entregado'].includes(p.estatus_entrega)
+        );
+
       },
-      error: (err) => {
-        console.error('Error al cargar mis pedidos:', err);
-      }
+      error: (err) => console.error('Error al cargar pedidos:', err)
     });
   }
 
   nuevoPedido() {
-    // Por ahora solo es un aviso pq luego se programa
-    alert('Próximamente: Pantalla para elegir cantidad y método de pago.');
+    this.router.navigate(['/nuevo-pedido']);
   }
 
-  // Colores del estatus
-  getColorEstatus(estatus: string): string {
-    switch (estatus) {
+  subirComprobante(idPedido: number) {
+    alert('Próximamente: Abrir cámara/galería para el pedido ' + idPedido);
+  }
+
+  // Da estilo visual a las etiquetas
+  getColorEstatus(estatus: string) {
+    switch(estatus) {
       case 'Pendiente': return 'warning';
-      case 'En camino': return 'primary';
+      case 'En camino': return 'tertiary';
       case 'Entregado': return 'success';
+      case 'Cancelado': 
+      case 'No Entregado': return 'danger';
       default: return 'medium';
     }
   }

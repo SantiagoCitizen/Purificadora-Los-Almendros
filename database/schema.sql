@@ -79,6 +79,7 @@ create table if not exists pedidos (
     foreign key (id_repartidor_asignado) references usuarios (id_usuario)
 );
 
+
 #Modificacion: Columna tarifa especial
 ALTER TABLE usuarios 
 ADD COLUMN tarifa_especial float null AFTER rfc;
@@ -89,6 +90,7 @@ ALTER TABLE usuarios ADD COLUMN en_turno boolean default false;
 #Columna en usuarios para saber si sigue siendo empleado (si sigue contratado)
 ALTER TABLE usuarios ADD COLUMN estatus_contrato boolean default true;
 
+#Tabla de configuracion para cambiar datos
 CREATE TABLE IF NOT EXISTS configuracion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     precio_garrafon DECIMAL(10,2) NOT NULL,
@@ -98,3 +100,17 @@ CREATE TABLE IF NOT EXISTS configuracion (
 #Valores base de la configuracion
 INSERT INTO configuracion (precio_garrafon, whatsapp) 
 VALUES (26.00, '9210000000');
+
+#actualizar formato de fecha
+UPDATE pedidos
+SET fecha_hora_creacion = DATE_FORMAT(fecha_hora_creacion, '%d-%m-%Y %H:%i:%s')
+WHERE fecha_hora_creacion IS NOT NULL;
+
+UPDATE pedidos
+SET fecha_hora_creacion = DATE_FORMAT(fecha_hora_creacion, '%d/%m/%Y');
+
+SET SQL_SAFE_UPDATES = 0;
+
+SET SQL_SAFE_UPDATES = 1;
+
+ALTER TABLE pedidos ADD COLUMN notas_cliente TEXT NULL AFTER estatus_entrega;
