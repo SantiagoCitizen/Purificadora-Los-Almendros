@@ -55,7 +55,17 @@
 
     </ion-card-content>
   </ion-card>
+  <!-- Sección Empresa -->
+  <ion-item lines="none" class="ion-margin-top">
+    <ion-label>¿Eres una empresa / negocio?</ion-label>
+    <ion-toggle [(ngModel)]="cliente.es_empresa" name="es_empresa"></ion-toggle>
+  </ion-item>
 
+  <ion-item *ngIf="cliente.es_empresa" class="ion-margin-bottom">
+    <ion-label position="floating">Nombre de la Empresa o Negocio</ion-label>
+    <ion-input type="text" [(ngModel)]="cliente.razon_social" name="razon_social"></ion-input>
+  </ion-item>
+  
   <ion-button expand="block" color="success" class="ion-margin-top" (click)="registrarCliente()">
     Registrarme
   </ion-button>

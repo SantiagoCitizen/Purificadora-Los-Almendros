@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/environment'; // <-- 1. Importamos el entorno
+import { environment } from '../../environments/environment'; // 
 
 import { 
   IonHeader, 
@@ -20,7 +20,10 @@ import {
   IonSelect, 
   IonSelectOption, 
   IonTextarea, 
-  IonButton 
+  IonButton,
+  IonItem,      
+  IonLabel,     
+  IonToggle     
 } from '@ionic/angular';
 
 @Component({
@@ -45,7 +48,10 @@ import {
     IonSelect, 
     IonSelectOption, 
     IonTextarea, 
-    IonButton
+    IonButton,
+    IonItem,      
+    IonLabel,     
+    IonToggle     
   ]
 })
 export class RegistroPage implements OnInit {
@@ -62,7 +68,9 @@ export class RegistroPage implements OnInit {
     id_colonia: null,
     calle: '',
     numero: '',
-    referencias_domicilio: ''
+    referencias_domicilio: '',
+    es_empresa: false,
+    razon_social: ''
   };
 
   constructor(private http: HttpClient, private router: Router) { }

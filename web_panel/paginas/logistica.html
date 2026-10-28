@@ -54,16 +54,22 @@
         <!--Repartidores-->
         <div class="d-flex justify-content-between align-items-center mt-5 mb-4">
             <h2 class="fw-bold text-secondary">Repartidores</h2>
-            <!--Agregar repartidor-->
-            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
-                <i class="bi bi-plus-lg"></i> Agregar Repartidor
-            </button>
-            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#asignarRutas">
-                <i class="bi bi-plus-lg"></i> Asignar Rutas
-            </button>
-            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#bajaRepartidor">
-                <i class="bi bi-arrow-down-short"></i> Dar Baja
-            </button>
+            <div class="d-flex gap-2">
+                <!--Agregar repartidor-->
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoRepartidor">
+                    <i class="bi bi-plus-lg"></i> Agregar Repartidor
+                </button>
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#asignarRutas">
+                    <i class="bi bi-plus-lg"></i> Asignar Rutas
+                </button>
+                <!-- BOTÓN NUEVO: ASIGNAR A EMPRESA -->
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#asignarEmpresa">
+                    <i class="bi bi-building"></i> Asignar a Empresa
+                </button>
+                <button class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#bajaRepartidor">
+                    <i class="bi bi-arrow-down-short"></i> Dar Baja
+                </button>
+            </div>
         </div>
         <!--Tabla con repartidores-->
         <div class="card border-0 shadow-sm mb-5">
@@ -82,7 +88,7 @@
                         <!--ID: tablaRepartidoresLogistica-->
                         <tbody id="tablaRepartidoresLogistica">
                             <tr>
-                                <td colspan="2" class="text-center py-4 text-muted">
+                                <td colspan="5" class="text-center py-4 text-muted">
                                     <div class="spinner-border spinner-border-sm me-2" role="status"></div> Cargando repartidores...
                                 </td>
                             </tr>
@@ -202,12 +208,12 @@
         </div>
     </div>
 
-    <!--Modal Asignar rutas-->
+    <!--Modal Asignar rutas (COLONIAS)-->
     <div class="modal fade" id="asignarRutas" tabindex="-1" aria-labelledby="asignarRutas" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold text-primary" id="asignarRutas">
+                    <h5 class="modal-title fw-bold text-primary" id="asignarRutasLabel">
                         <i class="bi bi-map"></i> Asignar Rutas a Repartidores
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -228,7 +234,6 @@
                             <div class="text-center text-muted py-3">
                                 <div class="spinner-border spinner-border-sm me-2" role="status"></div> Cargando colonias...
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -240,9 +245,46 @@
                     </button>
                 </div>
             </div>
-
         </div>
+    </div>
 
+    <!-- MODAL NUEVO: ASIGNAR REPARTIDOR A EMPRESA -->
+    <div class="modal fade" id="asignarEmpresa" tabindex="-1" aria-labelledby="asignarEmpresaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-primary">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="asignarEmpresaLabel">
+                        <i class="bi bi-building"></i> Asignar Ruta a Empresa
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">Vinculará directamente a un Repartidor con una Empresa específica, ignorando la colonia del negocio.</p>
+                    
+                    <!--Seleccion de repartidor-->
+                    <div class="mb-4">
+                        <label for="selectRepartidorEmpresa" class="form-label fw-semibold">1. Selecciona al Repartidor</label>
+                        <select class="form-select border-primary" id="selectRepartidorEmpresa">
+                            <option value="">Cargando repartidores...</option>
+                        </select>
+                    </div>
+                    
+                    <!--Seleccion de Empresa-->
+                    <div class="mb-3">
+                        <label for="selectClienteEmpresa" class="form-label fw-semibold">2. Selecciona a la Empresa</label>
+                        <select class="form-select border-primary" id="selectClienteEmpresa">
+                            <option value="">Cargando empresas...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarAsignacionEmpresa">
+                        <i class="bi bi-save"></i> Vincular Empresa
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!--Script bootstrap-->
@@ -250,9 +292,7 @@
 
     <!--JS-->
     <script src="../js/auth.js"></script>
-
     <script type="module" src="../js/logistica.js"></script>
-
     <script src="../js/sidebar.js"></script>
 
 </body>

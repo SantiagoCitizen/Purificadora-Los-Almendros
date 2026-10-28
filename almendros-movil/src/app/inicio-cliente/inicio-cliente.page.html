@@ -2,7 +2,15 @@
   <ion-toolbar color="primary">
     <ion-title>Agua Los Almendros</ion-title>
     <ion-buttons slot="end">
-      <ion-button color="danger" fill="solid" (click)="cerrarSesion()">Salir</ion-button>
+      <!-- BOTÓN DE AJUSTES -->
+      <ion-button (click)="abrirAjustes()">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button>
+      
+      <!-- BOTÓN DE SALIR -->
+      <ion-button color="danger" fill="solid" (click)="cerrarSesion()">
+        Salir
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>

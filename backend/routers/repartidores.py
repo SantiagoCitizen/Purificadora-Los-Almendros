@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 import bcrypt
+from mysql.connector import Error  
 from database import db_conexion
 from routers.auth import get_usuario_actual
 
@@ -27,7 +28,42 @@ class ActualizarEstatus(BaseModel):
     estatus: str
     notas_campo: Optional[str] = None 
 
+class AsignarEmpresa(BaseModel):
+    id_cliente_empresa: int
+
 #---------------------Panel Principal----------------------
+
+@router.post("/{id_usuario}/empresas")
+def asignar_rutas_empresa(id_usuario: int, datos: AsignarEmpresa):
+    conexion = db_conexion()
+    if not conexion:
+        raise HTTPException(status_code=500, detail="Error de conexión")
+
+    try:
+        cursor = conexion.cursor()
+        
+        # Primero borra si la empresa ya tenía un repartidor asignado antes 
+        # (Esto evita que una misma empresa tenga a 2 repartidores asignados al mismo tiempo)
+        cursor.execute("DELETE FROM repartidores_empresas WHERE id_cliente_empresa = %s", (datos.id_cliente_empresa,))
+        
+        #Inserta la nueva asignación
+        cursor.execute("""
+            INSERT INTO repartidores_empresas (id_usuario_repartidor, id_cliente_empresa)
+            VALUES (%s, %s)
+        """, (id_usuario, datos.id_cliente_empresa))
+        
+        conexion.commit()
+        return {"mensaje": "Empresa asignada correctamente al repartidor"}
+        
+    except Error as e:
+        conexion.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 #Ver repartidores (Tambien se ocupa en el panel de logistica)
 @router.get("/")
 def get_repartidores():

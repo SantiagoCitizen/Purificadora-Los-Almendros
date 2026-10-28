@@ -31,6 +31,7 @@ def get_clientes():
             SELECT
                 id_usuario,
                 CONCAT_WS(' ', nombre, apellido_paterno) AS cliente,
+                razon_social,
                 CASE id_rol
                     WHEN 3 THEN 'Residencial'
                     WHEN 4 THEN 'Empresarial'
@@ -155,19 +156,36 @@ def crear_pedido(
             raise HTTPException(status_code=400, detail="No tienes una dirección registrada en el sistema.")
             
         id_direccion = direccion["id_direccion"]
-        id_colonia = direccion["id_colonia"]
+        id_colonia_fisica = direccion["id_colonia"]
         
-        # 3. AUTO-ASIGNACIÓN: Buscar qué repartidor cubre la colonia de este cliente
-        cursor.execute("""
-            SELECT id_usuario_repartidor 
-            FROM repartidores_rutas 
-            WHERE id_colonia = %s AND estatus_disponibilidad = 1 
-            LIMIT 1
-        """, (id_colonia,))
-        repartidor = cursor.fetchone()
-        
-        # Si encuentra un repartidor, toma su ID. Si no, lo deja en None (NULL)
-        id_repartidor_asignado = repartidor["id_usuario_repartidor"] if repartidor else None
+        # 3. AUTO-ASIGNACIÓN INTELIGENTE: Empresa vs Residencial
+        id_repartidor_asignado = None
+
+        if usuario_actual.get("id_rol") == 4:
+            # Es una EMPRESA: Buscamos si tiene un repartidor específico asignado
+            cursor.execute("""
+                SELECT id_usuario_repartidor 
+                FROM repartidores_empresas 
+                WHERE id_cliente_empresa = %s 
+                LIMIT 1
+            """, (usuario_actual.get("id_usuario"),))
+            rep_empresa = cursor.fetchone()
+            
+            if rep_empresa:
+                id_repartidor_asignado = rep_empresa["id_usuario_repartidor"]
+                
+        # Si NO es empresa (Rol 3), o si es empresa pero aún no tiene repartidor asignado, 
+        # buscamos por su COLONIA FÍSICA.
+        if id_repartidor_asignado is None:
+            cursor.execute("""
+                SELECT id_usuario_repartidor 
+                FROM repartidores_rutas 
+                WHERE id_colonia = %s AND estatus_disponibilidad = 1 
+                LIMIT 1
+            """, (id_colonia_fisica,))
+            rep_colonia = cursor.fetchone()
+            if rep_colonia:
+                id_repartidor_asignado = rep_colonia["id_usuario_repartidor"]
 
         precio_unitario = monto_total / cantidad_garrafones
 

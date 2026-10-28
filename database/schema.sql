@@ -97,6 +97,14 @@ CREATE TABLE IF NOT EXISTS configuracion (
     whatsapp VARCHAR(20) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS repartidores_empresas (
+    id_asignacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario_repartidor INT NOT NULL,
+    id_cliente_empresa INT NOT NULL,
+    FOREIGN KEY (id_usuario_repartidor) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_cliente_empresa) REFERENCES usuarios(id_usuario)
+);
+
 #Valores base de la configuracion
 INSERT INTO configuracion (precio_garrafon, whatsapp) 
 VALUES (26.00, '9210000000');

@@ -36,12 +36,12 @@ class ClienteRegistro(BaseModel):
     password: str
     razon_social: Optional[str] = None
     rfc: Optional[str] = None
-
     #Datos de direccion
     id_colonia: int
     calle: str
     numero: str
     referencias_domicilio: Optional[str] = None
+    es_empresa: bool = False
 
 #Login
 @router.post("/login")
@@ -188,8 +188,8 @@ def registrar_cliente(datos: ClienteRegistro):
         password_bytes = datos.password.encode('utf-8')
         password_encriptada = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
 
-        # 3. Asignar el rol (3 = Cliente)
-        id_rol_asignado = 3 
+        # 3. LÓGICA EMPRESARIAL: Asignar el rol (4 = Empresa, 3 = Cliente Residencial)
+        id_rol_asignado = 4 if datos.es_empresa else 3 
 
         # 4. Insertar en tabla USUARIOS
         sql_usuario = """

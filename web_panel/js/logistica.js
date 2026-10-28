@@ -401,7 +401,7 @@ if (btnConfirmarBaja) {
         }
     });
 }
-//Asignacion de rutas en logistica
+//Asignacion de rutas en logistica (Colonias)
 
 const asignarRutas = document.getElementById('asignarRutas');
 
@@ -522,5 +522,102 @@ if (btnGuardarRutas) {
         }
     });
 }
+
+// ==========================================
+// MÓDULO NUEVO: ASIGNAR REPARTIDOR A EMPRESA
+// ==========================================
+const modalAsignarEmpresa = document.getElementById('asignarEmpresa');
+
+if (modalAsignarEmpresa) {
+    modalAsignarEmpresa.addEventListener('show.bs.modal', async () => {
+        const selectRepartidor = document.getElementById('selectRepartidorEmpresa');
+        const selectEmpresa = document.getElementById('selectClienteEmpresa');
+
+        selectRepartidor.innerHTML = '<option value="">Cargando...</option>';
+        selectEmpresa.innerHTML = '<option value="">Cargando...</option>';
+
+        try {
+            // 1. Cargar repartidores activos
+            const resRep = await fetch(`${environment.apiUrl}/repartidores`);
+            const repartidores = await resRep.json();
+            const repartidoresActivos = repartidores.filter(r => r.estatus_contrato === 1);
+            
+            selectRepartidor.innerHTML = '<option value="">-- Selecciona un repartidor --</option>';
+            repartidoresActivos.forEach(rep => {
+                const nombreCompleto = `${rep.nombre_pila || rep.nombre} ${rep.apellido_paterno}`.trim();
+                selectRepartidor.innerHTML += `<option value="${rep.id_usuario}">${nombreCompleto}</option>`;
+            });
+
+            // 2. Cargar clientes empresariales
+            const resCli = await fetch(`${environment.apiUrl}/clientes`);
+            const clientes = await resCli.json();
+            // Filtramos a los que nuestro backend marco como Empresarial
+            const empresas = clientes.filter(c => c.categoria === 'Empresarial');
+
+            selectEmpresa.innerHTML = '<option value="">-- Selecciona una empresa --</option>';
+            if (empresas.length === 0) {
+                selectEmpresa.innerHTML = '<option value="" disabled>No hay empresas registradas</option>';
+            } else {
+                empresas.forEach(emp => {
+                    // ARMAMOS EL TEXTO: "Nombre de Empresa (Dueño)"
+                    const textoMostrar = emp.razon_social 
+                        ? `${emp.razon_social} (${emp.cliente})` 
+                        : emp.cliente;
+                        
+                    selectEmpresa.innerHTML += `<option value="${emp.id_usuario}">${textoMostrar}</option>`;
+                });
+            }
+        } catch (error) {
+            console.error("Error al cargar datos para el modal de empresas:", error);
+            selectRepartidor.innerHTML = '<option value="">Error al cargar</option>';
+            selectEmpresa.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    });
+}
+
+const btnGuardarAsignacionEmpresa = document.getElementById('btnGuardarAsignacionEmpresa');
+if (btnGuardarAsignacionEmpresa) {
+    btnGuardarAsignacionEmpresa.addEventListener('click', async () => {
+        const idRepartidor = document.getElementById('selectRepartidorEmpresa').value;
+        const idEmpresa = document.getElementById('selectClienteEmpresa').value;
+
+        if (!idRepartidor || !idEmpresa) {
+            alert('Por favor, selecciona al repartidor y a la empresa de las listas.');
+            return;
+        }
+
+        const textoOriginal = btnGuardarAsignacionEmpresa.innerHTML;
+        btnGuardarAsignacionEmpresa.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        btnGuardarAsignacionEmpresa.disabled = true;
+
+        try {
+            // Mandamos llamar a nuestra nueva ruta de Python
+            const respuesta = await fetch(`${environment.apiUrl}/repartidores/${idRepartidor}/empresas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_cliente_empresa: parseInt(idEmpresa) })
+            });
+
+            if (respuesta.ok) {
+                alert('La empresa fue asignada a este repartidor exitosamente.');
+                const modalElement = document.getElementById('asignarEmpresa');
+                const modalInstancia = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstancia) modalInstancia.hide();
+                // Opcional: Actualizar la tabla
+                cargarRepartidoresLogistica();
+            } else {
+                const errorData = await respuesta.json();
+                alert(`Error al guardar: ${errorData.detail}`);
+            }
+        } catch (error) {
+            console.error("Error al asignar empresa:", error);
+            alert('No se pudo conectar con el servidor.');
+        } finally {
+            btnGuardarAsignacionEmpresa.innerHTML = textoOriginal;
+            btnGuardarAsignacionEmpresa.disabled = false;
+        }
+    });
+}
+
 cargarColonias();
 cargarRepartidoresLogistica();

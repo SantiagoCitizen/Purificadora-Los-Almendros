@@ -72,7 +72,7 @@ export class HomePage {
         if (rol === 2) {
           // Si es rol 2 (Repartidor), va a su ruta
           this.router.navigate(['/ruta']);
-        } else if (rol === 3) {
+        } else if (rol === 3 || rol === 4) {
           // Si es rol 3 (Cliente), va a su nueva pantalla de inicio
           this.router.navigate(['/inicio-cliente']);
         } else {

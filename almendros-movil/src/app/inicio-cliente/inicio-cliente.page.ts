@@ -12,7 +12,7 @@ import {
   IonSegment, IonSegmentButton, IonLabel 
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { cloudUploadOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { cloudUploadOutline, checkmarkCircleOutline, settingsOutline } from 'ionicons/icons'; // <-- Añadimos settingsOutline
 
 @Component({
   selector: 'app-inicio-cliente',
@@ -34,7 +34,8 @@ export class InicioClientePage implements OnInit {
   pedidosHistorial: any[] = [];
 
   constructor(private http: HttpClient, private router: Router) {
-    addIcons({ cloudUploadOutline, checkmarkCircleOutline });
+    // Registramos el ícono del engrane
+    addIcons({ cloudUploadOutline, checkmarkCircleOutline, settingsOutline }); 
   }
 
   ngOnInit() {
@@ -71,6 +72,10 @@ export class InicioClientePage implements OnInit {
 
   nuevoPedido() {
     this.router.navigate(['/nuevo-pedido']);
+  }
+
+  abrirAjustes() { 
+    this.router.navigate(['/ajustes']);
   }
 
   subirComprobante(idPedido: number) {
