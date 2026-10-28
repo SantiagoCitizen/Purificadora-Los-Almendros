@@ -1,13 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from database import db_conexion
 from mysql.connector import Error
 import datetime 
-
+from .auth import get_usuario_actual
 router = APIRouter(prefix="/finanzas", tags=["Finanzas"])
 
 #Tarjetas KPIs
 @router.get("/kpis")
-def get_kpis_hoy():
+def get_kpis_hoy(usuario_actual: dict = Depends(get_usuario_actual)):
 
     conexion = db_conexion()
     if conexion is None:
