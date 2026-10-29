@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/environment'; // 
+import { environment } from '../../environments/environment'; 
 
 import { 
   IonHeader, 
@@ -23,7 +23,9 @@ import {
   IonButton,
   IonItem,      
   IonLabel,     
-  IonToggle     
+  IonToggle,
+  ToastController,  
+  AlertController   
 } from '@ionic/angular';
 
 @Component({
@@ -51,12 +53,11 @@ import {
     IonButton,
     IonItem,      
     IonLabel,     
-    IonToggle     
+    IonToggle 
   ]
 })
 export class RegistroPage implements OnInit {
   
-  // Lista que se llenará desde el backend
   colonias: any[] = [];
 
   cliente = {
@@ -73,34 +74,60 @@ export class RegistroPage implements OnInit {
     razon_social: ''
   };
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private toastCtrl: ToastController, 
+    private alertCtrl: AlertController  
+  ) { }
 
   ngOnInit() {
     this.cargarColonias();
   }
 
-  cargarColonias() {
+  
+  async mostrarToast(mensaje: string, color: string = 'success') {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: 2500, 
+      color: color,
+      position: 'bottom'
+    });
+    await toast.present();
+  }
 
+  async mostrarAlerta(cabecera: string, mensaje: string) {
+    const alert = await this.alertCtrl.create({
+      header: cabecera,
+      message: mensaje,
+      buttons: ['Entendido']
+    });
+    await alert.present();
+  }
+  
+
+  cargarColonias() {
     this.http.get(`${environment.apiUrl}/colonias`).subscribe({
       next: (datos: any) => {
         this.colonias = datos;
       },
       error: (err) => {
         console.error('Error al cargar colonias:', err);
-        alert('No se pudieron cargar las colonias. Revisa tu conexión.');
+        
+        this.mostrarToast('No se pudieron cargar las colonias. Revisa tu conexión.', 'danger');
       }
     });
   }
 
   registrarCliente() {
-    // Validación básica para que no envíen datos vacíos 
+    // Validación básica 
     if (!this.cliente.nombre || !this.cliente.apellido_paterno || !this.cliente.telefono || 
         !this.cliente.password || !this.cliente.id_colonia || !this.cliente.calle || !this.cliente.numero) {
-      alert('Por favor, llena todos los campos obligatorios.');
+      
+      this.mostrarToast('Por favor, llena todos los campos obligatorios.', 'warning');
       return;
     }
 
-    //  Prepara la petición
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -108,17 +135,17 @@ export class RegistroPage implements OnInit {
     this.http.post(`${environment.apiUrl}/registro`, this.cliente, { headers })
       .subscribe({
         next: (respuesta: any) => {
-          // Si el backend dice que todo OK (Status 200)
-          alert(respuesta.mensaje || '¡Cuenta creada exitosamente! Ya puedes iniciar sesión.');
-          this.router.navigate(['/home']); // Lo regresamos al login
+          
+          this.mostrarToast(respuesta.mensaje || '¡Cuenta creada exitosamente!');
+          this.router.navigate(['/home']); 
         },
         error: (error) => {
-          // Si el teléfono ya existe o hay un error, FastAPI nos mandará un detail
           if (error.error && error.error.detail) {
-            alert(error.error.detail);
+            
+            this.mostrarAlerta('Registro Fallido', error.error.detail);
           } else {
             console.error('Error en el registro:', error);
-            alert('Ocurrió un error al intentar crear tu cuenta.');
+            this.mostrarToast('Ocurrió un error al intentar crear tu cuenta.', 'danger');
           }
         }
       });

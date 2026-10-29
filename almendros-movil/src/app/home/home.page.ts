@@ -12,7 +12,9 @@ import {
   IonList, 
   IonItem, 
   IonInput, 
-  IonButton 
+  IonButton,
+  ToastController,  
+  AlertController   
 } from '@ionic/angular';
 
 @Component({
@@ -36,7 +38,33 @@ export class HomePage {
   telefono = '';
   password = '';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private toastCtrl: ToastController, 
+    private alertCtrl: AlertController  
+  ) {}
+  
+ 
+  async mostrarToast(mensaje: string, color: string = 'success') {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: 2500,
+      color: color,
+      position: 'bottom'
+    });
+    await toast.present();
+  }
+
+  async mostrarAlerta(cabecera: string, mensaje: string) {
+    const alert = await this.alertCtrl.create({
+      header: cabecera,
+      message: mensaje,
+      buttons: ['Entendido']
+    });
+    await alert.present();
+  }
+  
   
   irARegistro() {
     this.router.navigate(['/registro']);
@@ -44,7 +72,8 @@ export class HomePage {
   
   iniciarSesion() {
     if (!this.telefono || !this.password) {
-      alert('Ingresa tu teléfono y contraseña');
+      
+      this.mostrarToast('Por favor, ingresa tu teléfono y contraseña.', 'warning');
       return;
     }
 
@@ -73,15 +102,16 @@ export class HomePage {
           // Si es rol 2 (Repartidor), va a su ruta
           this.router.navigate(['/ruta']);
         } else if (rol === 3 || rol === 4) {
-          // Si es rol 3 (Cliente), va a su nueva pantalla de inicio
+          // Si es rol 3 (Cliente) o 4 (Empresa), va a su nueva pantalla de inicio
           this.router.navigate(['/inicio-cliente']);
         } else {
-          // Si por alguna razón entra un administrador u otro rol
-          alert('Tu cuenta no está configurada para usar la aplicación móvil.');
+          // Alerta para roles no admitidos (Administrador)
+          this.mostrarAlerta('Acceso Restringido', 'Tu cuenta no está configurada para usar la aplicación móvil.');
         }
       },
       error: (err) => {
-        alert(`Error ${err.status}: Teléfono o contraseña incorrectos`);
+        
+        this.mostrarToast('Teléfono o contraseña incorrectos.', 'danger');
         console.error('Detalles del error:', err);
       }
     });

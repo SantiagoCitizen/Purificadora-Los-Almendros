@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http'; 
 import { environment } from '../../environments/environment'; 
 
-
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
   IonContent, IonCard, IonCardHeader, IonCardTitle, 
-  IonCardSubtitle, IonCardContent, IonBadge, IonIcon
+  IonCardSubtitle, IonCardContent, IonBadge, IonIcon,
+  ToastController,  
+  AlertController   
 } from '@ionic/angular';
-
 
 import { addIcons } from 'ionicons';
 import { alertCircleOutline } from 'ionicons/icons';
@@ -32,7 +32,6 @@ import { alertCircleOutline } from 'ionicons/icons';
 export class RutaPage implements OnInit, OnDestroy {
   pedidos: any[] = [];
   
-  // Variables para el auto-actualizado y detección de pedidos nuevos
   private intervaloPolling: any;
   private idsConocidos: Set<number> = new Set();
   private primeraCarga: boolean = true;
@@ -40,7 +39,9 @@ export class RutaPage implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient, 
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastCtrl: ToastController, 
+    private alertCtrl: AlertController  
   ) { 
     addIcons({ alertCircleOutline });
   }
@@ -63,6 +64,25 @@ export class RutaPage implements OnInit, OnDestroy {
     this.detenerAutoActualizacion();
   }
 
+  async mostrarToast(mensaje: string, color: string = 'success', duracion: number = 2500) {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: duracion,
+      color: color,
+      position: 'top' 
+    });
+    await toast.present();
+  }
+
+  async mostrarAlertaError(cabecera: string, mensaje: string) {
+    const alert = await this.alertCtrl.create({
+      header: cabecera,
+      message: mensaje,
+      buttons: ['Entendido']
+    });
+    await alert.present();
+  }
+
   iniciarAutoActualizacion() {
     this.detenerAutoActualizacion();
     this.intervaloPolling = setInterval(() => {
@@ -83,7 +103,7 @@ export class RutaPage implements OnInit, OnDestroy {
     if (!token) {
       this.detenerAutoActualizacion();
       if (!esRevisionAutomatica) {
-        alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+        this.mostrarToast('Tu sesión expiró. Vuelve a iniciar sesión.', 'warning', 4000);
       }
       this.router.navigate(['/home']);
       return;
@@ -104,6 +124,7 @@ export class RutaPage implements OnInit, OnDestroy {
         if (!this.primeraCarga && hayPedidoNuevo) {
           console.log('🔔 ¡Nuevo pedido detectado! Reproduciendo alerta...');
           this.reproducirSonidoAlerta();
+          this.mostrarToast('¡Nuevo pedido recibido en la zona!', 'primary', 4000);
         }
 
         this.idsConocidos = new Set(listaRecibida.map((p: any) => p.id_pedido));
@@ -113,9 +134,17 @@ export class RutaPage implements OnInit, OnDestroy {
         this.cdr.detectChanges(); 
       },
       error: (err) => {
+        
+        if (err.status === 403) {
+          this.detenerAutoActualizacion();
+          this.router.navigate(['/inicio-cliente']); 
+          return;
+        }
+        // ------------------------------
+
         console.error('Error al cargar la ruta:', err);
         if (!esRevisionAutomatica) {
-          alert('No se pudo cargar la ruta del día.');
+          this.mostrarToast('Problemas de red. Intentando reconectar...', 'danger');
         }
       }
     });
@@ -152,43 +181,76 @@ export class RutaPage implements OnInit, OnDestroy {
     }
   }
 
-  actualizarEstatus(id_pedido: number, nuevoEstatus: string) {
+  async actualizarEstatus(id_pedido: number, nuevoEstatus: string) {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    let notaRepartidor = null;
-
-    // Si hubo un problema, obligamos al repartidor a justificar por qué
     if (nuevoEstatus === 'Cancelado' || nuevoEstatus === 'No Entregado') {
-      const razon = prompt('¿Por qué no se pudo completar la entrega? (Ej. Nadie abrió, No tenían dinero)');
-      
-      // Si presiona Cancelar, detenemos la actualización
-      if (razon === null) return; 
-      
-      notaRepartidor = razon.trim();
+      const alert = await this.alertCtrl.create({
+        header: 'Reportar Incidencia',
+        message: '¿Por qué no se pudo completar la entrega? (Ej. Nadie abrió, No tenían dinero)',
+        inputs: [
+          {
+            name: 'razon',
+            type: 'textarea',
+            placeholder: 'Escribe el motivo aquí...'
+          }
+        ],
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel',
+            handler: () => {
+              console.log('Actualización cancelada');
+            }
+          },
+          {
+            text: 'Guardar',
+            handler: (data) => {
+              
+              if (!data.razon || data.razon.trim() === '') {
+                this.mostrarToast('Debes escribir un motivo.', 'warning');
+                return false; 
+              }
+              // Si sí escribió, continua enviando la petición
+              this.enviarPeticionEstatus(id_pedido, nuevoEstatus, data.razon.trim(), token);
+              return true;
+            }
+          }
+        ]
+      });
+      await alert.present();
+    } else {
+      // Si el estatus es 'En camino' o 'Entregado', no pide notas y lo envia directo
+      this.enviarPeticionEstatus(id_pedido, nuevoEstatus, null, token);
     }
+  }
 
+  
+  private enviarPeticionEstatus(id_pedido: number, estatus: string, notas_campo: string | null, token: string) {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
 
     const body = { 
-      estatus: nuevoEstatus,
-      notas_campo: notaRepartidor
+      estatus: estatus,
+      notas_campo: notas_campo
     };
 
     this.http.put(`${environment.apiUrl}/repartidores/entregas/${id_pedido}/estatus`, body, { headers })
       .subscribe({
         next: () => {
+          this.mostrarToast(`Pedido marcado como ${estatus}`);
           this.cargarRutaDelDia(true);
         },
         error: (error) => {
           if (error.status === 400 && error.error && error.error.detail) {
-            alert(error.error.detail);
+            
+            this.mostrarAlertaError('Atención', error.error.detail);
           } else {
             console.error('Fallo al actualizar el estatus:', error);
-            alert('Ocurrió un error al actualizar el pedido.');
+            this.mostrarToast('Ocurrió un error al actualizar el pedido.', 'danger');
           }
         }
       });

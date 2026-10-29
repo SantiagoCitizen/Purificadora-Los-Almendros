@@ -8,20 +8,19 @@ router = APIRouter(prefix="/finanzas", tags=["Finanzas"])
 #Tarjetas KPIs
 @router.get("/kpis")
 def get_kpis_hoy():
-
     conexion = db_conexion()
     if conexion is None:
         raise HTTPException(status_code=500, detail="Error al conectar con la bd")
 
     try:
         cursor = conexion.cursor(dictionary=True)
-        #Una sola consulta que traiga todos los datos de una
+        
         sql_query = """
             SELECT
-            (SELECT COUNT(*) FROM pedidos WHERE tipo_pago = 'Transferencia' AND pago_confirmado = 0 AND estatus_entrega != 'Pago Rechazado') AS transferencias_pendientes,
-            (SELECT COUNT(*) FROM pedidos WHERE (estatus_entrega != 'Entregado' OR notas_campo IS NOT NULL) AND DATE(fecha_hora_creacion) = CURDATE()) AS alertas,
-            (SELECT COALESCE(SUM(monto_total), 0) FROM pedidos WHERE DATE(fecha_hora_creacion) = CURDATE()) AS ventas_totales,
-            (SELECT COALESCE(SUM(cantidad_garrafones), 0) FROM pedidos WHERE DATE(fecha_hora_creacion) = CURDATE()) AS garrafones_totales;
+            (SELECT COUNT(*) FROM pedidos WHERE tipo_pago = 'Transferencia' AND pago_confirmado = 0 AND estatus_entrega NOT IN ('Cancelado', 'Pago Rechazado')) AS transferencias_pendientes,
+            (SELECT COUNT(*) FROM pedidos WHERE (estatus_entrega IN ('Cancelado', 'No Entregado', 'Pago Rechazado') OR notas_campo IS NOT NULL) AND DATE(fecha_hora_creacion) = CURDATE()) AS alertas,
+            (SELECT COALESCE(SUM(monto_total), 0) FROM pedidos WHERE estatus_entrega = 'Entregado' AND DATE(fecha_hora_creacion) = CURDATE()) AS ventas_totales,
+            (SELECT COALESCE(SUM(cantidad_garrafones), 0) FROM pedidos WHERE estatus_entrega = 'Entregado' AND DATE(fecha_hora_creacion) = CURDATE()) AS garrafones_totales;
         """
 
         cursor.execute(sql_query)
@@ -30,20 +29,20 @@ def get_kpis_hoy():
     except Error as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
-        conexion.close()
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 #Transferencias por validar
 @router.get("/transferencias-pendientes")
 def get_transferencias():
-
     conexion = db_conexion()
     if conexion is None:
         raise HTTPException(status_code=500, detail="Error al conectar con la bd")
 
     try:
         cursor = conexion.cursor(dictionary=True)
-        #Se agrupa por separtidor y se suma el efectivo y transferencias del dia
         sql_query = """
             SELECT 
                 p.id_pedido, 
@@ -55,7 +54,7 @@ def get_transferencias():
             JOIN usuarios u ON p.id_cliente = u.id_usuario
             WHERE p.tipo_pago = 'Transferencia' 
             AND p.pago_confirmado = 0 
-            AND p.estatus_entrega != 'Pago Rechazado'
+            AND p.estatus_entrega NOT IN ('Pago Rechazado', 'Cancelado')
             ORDER BY p.fecha_hora_creacion DESC;
         """
         cursor.execute(sql_query)
@@ -63,13 +62,14 @@ def get_transferencias():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
-        conexion.close()
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
 
-#Resumen de venta por repartidor
+#Resumen de venta por repartidor 
 @router.get("/conciliacion-hoy")
 def get_conciliacion_repartidores():
-
     conexion = db_conexion()
     if conexion is None:
         raise HTTPException(status_code=500, detail="Error al conectar con la bd")
@@ -77,15 +77,15 @@ def get_conciliacion_repartidores():
     try:
         cursor = conexion.cursor(dictionary=True)
 
-        #Agrupar por repartidor, sumar efectivo y transferencias
+        
         sql_query = """
             SELECT 
                 u.id_usuario AS id_repartidor,
                 CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS repartidor,
-                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Efectivo' THEN p.monto_total ELSE 0 END), 0) AS efectivo_esperado,
-                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Transferencia' THEN p.monto_total ELSE 0 END), 0) AS transferencias_totales,
-                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Transferencia' AND p.pago_confirmado = 1 THEN p.monto_total ELSE 0 END), 0) AS transferencias_validadas,
-                SUM(CASE WHEN p.estatus_entrega != 'Entregado' OR p.notas_campo IS NOT NULL THEN 1 ELSE 0 END) AS incidencias
+                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Efectivo' AND p.estatus_entrega = 'Entregado' THEN p.monto_total ELSE 0 END), 0) AS efectivo_esperado,
+                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Transferencia' AND p.estatus_entrega = 'Entregado' THEN p.monto_total ELSE 0 END), 0) AS transferencias_totales,
+                COALESCE(SUM(CASE WHEN p.tipo_pago = 'Transferencia' AND p.pago_confirmado = 1 AND p.estatus_entrega = 'Entregado' THEN p.monto_total ELSE 0 END), 0) AS transferencias_validadas,
+                SUM(CASE WHEN p.estatus_entrega IN ('Cancelado', 'No Entregado', 'Pago Rechazado') OR p.notas_campo IS NOT NULL THEN 1 ELSE 0 END) AS incidencias
             FROM pedidos p
             JOIN usuarios u ON p.id_repartidor_asignado = u.id_usuario
             WHERE DATE(p.fecha_hora_creacion) = CURDATE()
@@ -96,10 +96,12 @@ def get_conciliacion_repartidores():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
-        conexion.close()
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
 
-#Notas de campo
+#Notas de campo 
 @router.get("/incidencias-hoy")
 def get_incidencias():
     conexion = db_conexion()
@@ -107,16 +109,17 @@ def get_incidencias():
         raise HTTPException(status_code=500, detail="Error al conectar con la bd")
     try:
         cursor = conexion.cursor(dictionary=True)
+        
         sql_query = """
             SELECT 
                 p.id_pedido, 
-                CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')) AS repartidor, 
+                COALESCE(CONCAT(u.nombre, ' ', COALESCE(u.apellido_paterno, '')), 'Sin Asignar') AS repartidor, 
                 p.estatus_entrega, 
                 p.notas_campo 
             FROM pedidos p
-            JOIN usuarios u ON p.id_repartidor_asignado = u.id_usuario
+            LEFT JOIN usuarios u ON p.id_repartidor_asignado = u.id_usuario
             WHERE DATE(p.fecha_hora_creacion) = CURDATE() 
-            AND (p.estatus_entrega != 'Entregado' OR p.notas_campo IS NOT NULL)
+            AND (p.estatus_entrega IN ('Cancelado', 'No Entregado', 'Pago Rechazado') OR p.notas_campo IS NOT NULL)
             ORDER BY p.fecha_hora_creacion DESC;
         """
         cursor.execute(sql_query)
@@ -124,8 +127,10 @@ def get_incidencias():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
-        conexion.close()
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 #Aprobar transferencias
 @router.put("/transferencias/{id_pedido}/aprobar")
@@ -135,7 +140,6 @@ def aprobar_transferencia(id_pedido: int):
         raise HTTPException(status_code=500, detail="Error al conectar con la bd")
     try:
         cursor = conexion.cursor()
-        #Actualizar el pago a confirmado
         sql_query = "UPDATE pedidos SET pago_confirmado = 1 WHERE id_pedido = %s"
         cursor.execute(sql_query, (id_pedido,))
         conexion.commit()
@@ -158,7 +162,6 @@ def rechazar_transferencias(id_pedido: int):
 
     try:
         cursor = conexion.cursor()
-        #Rechazar la transferencia, poner nota de estatus de alerta y su notita de campo
         sql_query = "UPDATE pedidos SET estatus_entrega = 'Pago Rechazado', notas_campo = 'Comprobante rechazado por administracion' WHERE id_pedido = %s"
         cursor.execute(sql_query, (id_pedido,))
         conexion.commit()

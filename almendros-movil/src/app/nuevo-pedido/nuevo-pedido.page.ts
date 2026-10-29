@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +9,9 @@ import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonButton, IonIcon, IonRadioGroup, IonItem, IonLabel, IonRadio,
-  IonTextarea 
+  IonTextarea,
+  ToastController,  
+  AlertController   
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { addOutline, removeOutline, cashOutline, cardOutline, informationCircleOutline } from 'ionicons/icons';
@@ -27,20 +29,53 @@ import { addOutline, removeOutline, cashOutline, cardOutline, informationCircleO
     IonTextarea 
   ]
 })
-export class NuevoPedidoPage implements OnInit {
+export class NuevoPedidoPage {
   cantidad: number = 1;
   metodoPago: string = 'Efectivo';
   precioUnitario: number = 0; 
   notasCliente: string = ''; 
   archivoComprobante: File | null = null; 
 
-  constructor(private http: HttpClient, private router: Router) {
-    // Registrar los íconos para que se vean en el HTML
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private toastCtrl: ToastController, 
+    private alertCtrl: AlertController,
+    private cdr: ChangeDetectorRef 
+  ) {
     addIcons({ addOutline, removeOutline, cashOutline, cardOutline, informationCircleOutline });
   }
 
-  ngOnInit() {
+  
+  ionViewWillEnter() {
+    
+    this.cantidad = 1;
+    this.metodoPago = 'Efectivo';
+    this.notasCliente = '';
+    this.archivoComprobante = null;
+    this.precioUnitario = 0; 
+    
+    
     this.cargarPrecioCliente();
+  }
+
+  async mostrarToast(mensaje: string, color: string = 'success') {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: 2500, 
+      color: color,
+      position: 'bottom' 
+    });
+    await toast.present();
+  }
+
+  async mostrarAlerta(cabecera: string, mensaje: string) {
+    const alert = await this.alertCtrl.create({
+      header: cabecera,
+      message: mensaje,
+      buttons: ['Entendido']
+    });
+    await alert.present();
   }
 
   cambiarCantidad(valor: number) {
@@ -59,15 +94,17 @@ export class NuevoPedidoPage implements OnInit {
     this.http.get(`${environment.apiUrl}/clientes/mi-tarifa`, { headers }).subscribe({
       next: (res: any) => {
         this.precioUnitario = res.tarifa_especial || res.precio_garrafon;
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('Error al cargar tarifa:', err);
+        this.mostrarToast('Problemas de conexión al cargar tu tarifa.', 'danger');
         this.precioUnitario = 15; 
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Función para atrapar el archivo cuando el cliente lo selecciona
   seleccionarComprobante(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -78,14 +115,13 @@ export class NuevoPedidoPage implements OnInit {
   confirmarPedido() {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Tu sesión expiró.');
+      this.mostrarToast('Tu sesión expiró. Vuelve a iniciar sesión.', 'warning');
       this.router.navigate(['/home']);
       return;
     }
 
-    // Validación obligatoria: Si es transferencia, debe subir la imagen
     if (this.metodoPago === 'Transferencia' && !this.archivoComprobante) {
-      alert('⚠️ Es obligatorio adjuntar tu comprobante de pago para la transferencia.');
+      this.mostrarToast('⚠️ Es obligatorio adjuntar tu comprobante de pago.', 'warning');
       return;
     }
 
@@ -93,7 +129,6 @@ export class NuevoPedidoPage implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    // Se usa FormData para poder enviar texto e imágenes juntos
     const formData = new FormData();
     formData.append('cantidad_garrafones', this.cantidad.toString());
     formData.append('tipo_pago', this.metodoPago);
@@ -106,12 +141,12 @@ export class NuevoPedidoPage implements OnInit {
 
     this.http.post(`${environment.apiUrl}/clientes/pedidos`, formData, { headers }).subscribe({
       next: () => {
-        alert('¡Pedido confirmado! En breve un repartidor pasará a tu domicilio.');
+        this.mostrarAlerta('¡Pedido Confirmado!', 'En breve un repartidor pasará a tu domicilio.');
         this.router.navigate(['/inicio-cliente']);
       },
       error: (err) => {
         console.error('Error al crear pedido:', err);
-        alert('No se pudo procesar el pedido. Intenta nuevamente.');
+        this.mostrarToast('No se pudo procesar el pedido. Intenta nuevamente.', 'danger');
       }
     });
   }
