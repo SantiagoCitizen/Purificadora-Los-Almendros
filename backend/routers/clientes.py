@@ -143,7 +143,7 @@ def crear_pedido(
             shutil.copyfileobj(comprobante.file, buffer)
             
         # Genera la URL para la base de datos
-        comprobante_url = f"http://127.0.0.1:8000/uploads/comprobantes/{filename}"
+        comprobante_url = f"https://purificadora-los-almendros-production.up.railway.app/uploads/comprobantes/{filename}"
 
     try:
         cursor = conexion.cursor(dictionary=True)
