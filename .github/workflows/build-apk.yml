@@ -28,7 +28,7 @@ jobs:
       - name: Instalar dependencias y compilar Ionic
         run: |
           npm install
-          npx ionic build --prod
+          npx run build
           npx cap sync android
 
       - name: Compilar APK con Gradle
